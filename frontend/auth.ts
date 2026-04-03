@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/prisma";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { comparePassword } from "./lib/password-utils";
 import * as jwt from "jsonwebtoken";
 import { JWT } from "next-auth/jwt";
@@ -12,6 +13,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET,
   providers: [
+    // Google OAuth — Account 테이블에 provider 정보가 저장되고 User와 연결됨
+    GoogleProvider({
+      clientId: process.env.AUTH_GOOGLE_ID!,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {
