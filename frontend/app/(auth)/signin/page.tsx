@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { FcGoogle } from "react-icons/fc";
 
 export default function SignInPage() {
     const [email, setEmail] = useState("");
@@ -60,6 +61,18 @@ export default function SignInPage() {
                     로그인
                 </button>
                 <Link href="/signup" className="text-center border-2 border-gray-400 rounded-sm p-2 hover:border-gray-600">회원가입</Link>
+
+                <hr className="my-1 border-gray-300" />
+
+                {/* Google OAuth — 클릭 시 Google 인증 페이지로 리다이렉트되고 콜백 후 자동 로그인 */}
+                <button
+                    type="button"
+                    onClick={() => signIn('google', { callbackUrl: '/' })}
+                    className="flex items-center justify-center gap-2 border-2 border-gray-400 rounded-sm p-2 hover:border-gray-600 cursor-pointer"
+                >
+                    <FcGoogle size={18} />
+                    Google로 로그인
+                </button>
             </form>
         </div>
     )
