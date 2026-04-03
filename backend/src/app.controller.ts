@@ -1,8 +1,8 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
-import { AccessTokenGuard } from './auth/guard/access-token.guard';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { AccessTokenGuard } from './auth/guards/access-token.guard';
 import type { Request } from 'express';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller()
 export class AppController {
@@ -13,12 +13,11 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  // TODO: AccessTokenGuard 동작 확인용 임시 엔드포인트 — 검증 후 제거
   @Get('user-test')
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
-  testUser(@Req() req: Request) {
+  testUser(@Req() req: Request){
     console.log(req.user);
-    return 'test completed';
+    return `유저 이메일: ${req.user?.email}`  // 이부분 수정
   }
 }
