@@ -26,12 +26,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         },
       },
       async authorize(credentials) {
-        // 1. 모든 값들이 정상적으로 들어왔는가?
         if (!credentials || !credentials.email || !credentials.password) {
           throw new Error("이메일과 비밀번호를 입력해주세요.");
         }
 
-        // 2. DB에서 유저를 찾기
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email as string,
@@ -42,7 +40,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("존재하지 않는 이메일입니다.");
         }
 
-        // 3. 비밀번호 일치 여부 확인
         const passwordMatch = comparePassword(
           credentials.password as string,
           user.hashedPassword as string,
@@ -59,6 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "jwt",
   },
+  // NestJS 백엔드와 JWT 형식을 공유하기 위해 jsonwebtoken으로 직접 인코딩/디코딩
   jwt: {
     encode: async ({ token, secret }) => {
       return jwt.sign(token as jwt.JwtPayload, secret as string);
@@ -67,6 +65,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       try {
         return jwt.verify(token as string, secret as string) as JWT;
       } catch {
+        // jwt.verify는 실패 시 예외를 던지지만 NextAuth는 null 반환을 기대함
         return null;
       }
     },

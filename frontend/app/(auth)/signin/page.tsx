@@ -11,6 +11,7 @@ export default function SignInPage() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        // 기본값은 에러 페이지로 리다이렉트하므로, 직접 에러를 핸들링하기 위해 비활성화
         const result = await signIn("credentials", {
             email,
             password,
