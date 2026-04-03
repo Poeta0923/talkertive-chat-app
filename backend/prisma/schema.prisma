@@ -20,7 +20,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
   image         String?
-  password      String? // Credentials 로그인용 (OAuth 유저는 null)
+  hashedPassword String? @map("hashed_password") // Credentials 로그인용 (OAuth 유저는 null)
 
   accounts Account[]
   sessions Session[]
