@@ -26,7 +26,7 @@ export default function SignUpPage() {
     return (
         <div className="flex flex-col items-center justify-center h-screen gap-4">
             <h1 className="text-3xl font-bold">회원가입</h1>
-            <p className="text-gray-700">인프런에서 다양한 학습의 기회를 얻으세요</p>
+            <p className="text-gray-700">talkertive에서 다양한 만남의 기회를 얻으세요</p>
 
             <form 
                 onSubmit={handleSubmit} 
