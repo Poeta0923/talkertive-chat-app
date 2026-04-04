@@ -25,6 +25,7 @@ model User {
   roomMembers  RoomMember[]
   messages     Message[]
   messageReads MessageRead[]
+  roomLikes    RoomLike[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -90,9 +91,11 @@ model Room {
   memberLimit      Int?          @map("member_limit") // 최대 인원 (null이면 무제한)
   category         RoomCategory? // 모임 카테고리
   address          String? // 모임 장소 주소
+  date             DateTime? // 모임 일정 (DIRECT 채팅은 null)
 
   members  RoomMember[]
   messages Message[]
+  likes    RoomLike[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -114,6 +117,25 @@ enum RoomCategory {
   CULTURE // 문화/예술
   TECH // IT/기술
   ETC // 기타
+}
+
+// ──────────────────────────────────────────
+// 모임 좋아요
+// ──────────────────────────────────────────
+
+model RoomLike {
+  id     String @id @default(cuid())
+  roomId String @map("room_id")
+  userId String @map("user_id")
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 한 유저가 같은 모임에 중복 좋아요 불가
+  @@unique([roomId, userId])
+  @@map("room_likes")
 }
 
 // ──────────────────────────────────────────
