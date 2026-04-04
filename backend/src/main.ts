@@ -1,9 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // transform: true — 요청 데이터를 DTO 타입에 맞게 자동 변환 (string → number 등)
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+
+  // 개발 환경에서 프론트엔드(3000)와 Swagger(8000)의 cross-origin 요청 허용
+  app.enableCors({
+    origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : true,
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Talkertive API')
