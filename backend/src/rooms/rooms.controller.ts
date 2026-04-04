@@ -5,6 +5,7 @@ import { CreateGroupRoomDto } from './dto/create-group-room.dto';
 import { CreateDirectRoomDto } from './dto/create-direct-room.dto';
 import { UpdateGroupRoomDto } from './dto/update-group-room.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
+import { Room as RoomEntity } from '../_gen/prisma-class/room';
 import type { Request } from 'express';
 
 @ApiTags('rooms')
@@ -16,7 +17,7 @@ export class RoomsController {
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'GROUP 모임 채팅방 생성' })
-  @ApiCreatedResponse({ description: '생성된 GROUP 채팅방 정보' })
+  @ApiCreatedResponse({ description: '생성된 GROUP 채팅방 정보', type: RoomEntity })
   createGroupRoom(@Req() req: Request, @Body() dto: CreateGroupRoomDto) {
     const userId = (req.user as { sub: string }).sub;
     return this.roomsService.createGroupRoom(userId, dto);
@@ -26,7 +27,7 @@ export class RoomsController {
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '1대1 DIRECT 채팅방 생성' })
-  @ApiCreatedResponse({ description: '생성된 DIRECT 채팅방 정보' })
+  @ApiCreatedResponse({ description: '생성된 DIRECT 채팅방 정보', type: RoomEntity })
   createDirectRoom(@Req() req: Request, @Body() dto: CreateDirectRoomDto) {
     const userId = (req.user as { sub: string }).sub;
     return this.roomsService.createDirectRoom(userId, dto);
@@ -36,7 +37,7 @@ export class RoomsController {
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'GROUP 모임 채팅방 수정 (OWNER 전용)' })
-  @ApiOkResponse({ description: '수정된 GROUP 채팅방 정보' })
+  @ApiOkResponse({ description: '수정된 GROUP 채팅방 정보', type: RoomEntity })
   updateGroupRoom(
     @Req() req: Request,
     @Param('roomId') roomId: string,
@@ -48,7 +49,7 @@ export class RoomsController {
 
   @Get('group')
   @ApiOperation({ summary: 'GROUP 모임 채팅방 목록 조회 (date 오름차순)' })
-  @ApiOkResponse({ description: 'date가 현재 이후인 GROUP 채팅방 목록' })
+  @ApiOkResponse({ description: 'date가 현재 이후인 GROUP 채팅방 목록', type: RoomEntity, isArray: true })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
   @ApiQuery({ name: 'cursor', required: false, type: String, description: '마지막 항목의 roomId' })
@@ -66,7 +67,7 @@ export class RoomsController {
 
   @Get('group/:roomId')
   @ApiOperation({ summary: 'GROUP 모임 채팅방 단건 조회 (OWNER 정보 포함)' })
-  @ApiOkResponse({ description: 'OWNER 유저 정보가 포함된 GROUP 채팅방' })
+  @ApiOkResponse({ description: 'OWNER 유저 정보가 포함된 GROUP 채팅방', type: RoomEntity })
   findOneGroupRoom(@Param('roomId') roomId: string) {
     return this.roomsService.findOneGroupRoom(roomId);
   }
@@ -75,7 +76,7 @@ export class RoomsController {
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '내가 참여 중인 DIRECT 채팅방 목록 조회' })
-  @ApiOkResponse({ description: '상대방 유저 정보가 포함된 DIRECT 채팅방 목록' })
+  @ApiOkResponse({ description: '상대방 유저 정보가 포함된 DIRECT 채팅방 목록', type: RoomEntity, isArray: true })
   findAllDirectRooms(@Req() req: Request) {
     const userId = (req.user as { sub: string }).sub;
     return this.roomsService.findAllDirectRooms(userId);
@@ -85,7 +86,7 @@ export class RoomsController {
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '내가 참여 중인 DIRECT 채팅방 단건 조회 (상대방 정보 포함)' })
-  @ApiOkResponse({ description: '상대방 유저 정보가 포함된 DIRECT 채팅방' })
+  @ApiOkResponse({ description: '상대방 유저 정보가 포함된 DIRECT 채팅방', type: RoomEntity })
   findOneDirectRoom(@Req() req: Request, @Param('roomId') roomId: string) {
     const userId = (req.user as { sub: string }).sub;
     return this.roomsService.findOneDirectRoom(userId, roomId);
