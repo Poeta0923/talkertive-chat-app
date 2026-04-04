@@ -82,8 +82,10 @@ model Room {
   type RoomType @default(DIRECT)
 
   // ── 채팅방 기본 정보 ──────────────────────
-  name  String? // 단체 채팅방 이름 (1대1은 null)
-  image String? // 채팅방 커버 이미지
+  name         String? // 단체 채팅방 이름 (1대1은 null)
+  slug         String? @unique // URL용 식별자 (DIRECT 채팅은 null)
+  coverImage   String? @map("cover_image") // 채팅방 커버 이미지
+  profileImage String? @map("profile_image") // 채팅방 프로필 이미지
 
   // ── 모임 전용 필드 (GROUP 타입에서만 사용) ──
   description      String?       @db.Text // 모임 상세 설명 (마크다운)
