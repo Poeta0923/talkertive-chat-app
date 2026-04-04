@@ -14,10 +14,6 @@ export class CreateGroupRoomDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'URL용 식별자', example: 'my-study-group' })
-  @IsString()
-  slug: string;
-
   @ApiPropertyOptional({ description: '모임 상세 설명 (마크다운)' })
   @IsOptional()
   @IsString()

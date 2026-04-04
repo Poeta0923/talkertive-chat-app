@@ -8,6 +8,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+generator prismaClassGenerator {
+  provider = "prisma-class-generator"
+  dryRun = "false"
+  separateRelationFields = "false"
+  // Prisma Client가 @prisma/client 대신 커스텀 경로로 생성되므로 enum import 경로를 맞춰줘야 한다
+  clientImportPath = "generated/prisma"
+}
+
 // ──────────────────────────────────────────
 // 인증 관련 모델 (NextAuth)
 // ──────────────────────────────────────────

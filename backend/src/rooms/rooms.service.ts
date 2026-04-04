@@ -1,4 +1,6 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { randomBytes } from 'crypto';
+import slugify from 'slugify';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateGroupRoomDto } from './dto/create-group-room.dto';
 import { CreateDirectRoomDto } from './dto/create-direct-room.dto';
@@ -13,9 +15,16 @@ export class RoomsService {
    * GROUP 모임 채팅방을 생성하고 생성자를 OWNER로 등록한다.
    */
   async createGroupRoom(userId: string, dto: CreateGroupRoomDto): Promise<Room> {
+    // name 기반으로 slug를 생성하되, @unique 충돌 방지를 위해 랜덤 4자리 접미사를 붙인다
+    // 한글 등 라틴 문자가 아닌 이름은 slugify 결과가 빈 문자열이 되므로 'room'을 기본값으로 사용한다
+    const suffix = randomBytes(2).toString('hex');
+    const base = slugify(dto.name, { lower: true, strict: true }) || 'room';
+    const slug = `${base}-${suffix}`;
+
     return this.prisma.room.create({
       data: {
         ...dto,
+        slug,
         type: RoomType.GROUP,
         date: dto.date ? new Date(dto.date) : undefined,
         members: {
