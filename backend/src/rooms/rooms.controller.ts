@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RoomsService } from './rooms.service';
 import { CreateGroupRoomDto } from './dto/create-group-room.dto';
@@ -89,5 +89,25 @@ export class RoomsController {
   findOneDirectRoom(@Req() req: Request, @Param('roomId') roomId: string) {
     const userId = (req.user as { sub: string }).sub;
     return this.roomsService.findOneDirectRoom(userId, roomId);
+  }
+
+  @Delete('group/:roomId')
+  @UseGuards(AccessTokenGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'GROUP 모임 채팅방 삭제 (OWNER 전용)' })
+  @ApiOkResponse({ description: '채팅방 삭제 완료' })
+  deleteGroupRoom(@Req() req: Request, @Param('roomId') roomId: string) {
+    const userId = (req.user as { sub: string }).sub;
+    return this.roomsService.deleteGroupRoom(userId, roomId);
+  }
+
+  @Delete('direct/:roomId')
+  @UseGuards(AccessTokenGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'DIRECT 채팅방 삭제 (참가자 전용)' })
+  @ApiOkResponse({ description: '채팅방 삭제 완료' })
+  deleteDirectRoom(@Req() req: Request, @Param('roomId') roomId: string) {
+    const userId = (req.user as { sub: string }).sub;
+    return this.roomsService.deleteDirectRoom(userId, roomId);
   }
 }

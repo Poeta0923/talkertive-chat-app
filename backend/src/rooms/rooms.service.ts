@@ -155,6 +155,40 @@ export class RoomsService {
   }
 
   /**
+   * GROUP 모임 채팅방을 삭제한다. OWNER만 삭제할 수 있다.
+   */
+  async deleteGroupRoom(userId: string, roomId: string): Promise<void> {
+    const member = await this.prisma.roomMember.findUnique({
+      where: { roomId_userId: { roomId, userId } },
+    });
+
+    if (!member) {
+      throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+    }
+
+    if (member.role !== 'OWNER') {
+      throw new ForbiddenException('방장만 채팅방을 삭제할 수 있습니다.');
+    }
+
+    await this.prisma.room.delete({ where: { id: roomId } });
+  }
+
+  /**
+   * DIRECT 채팅방을 삭제한다. 참가자만 삭제할 수 있다.
+   */
+  async deleteDirectRoom(userId: string, roomId: string): Promise<void> {
+    const member = await this.prisma.roomMember.findUnique({
+      where: { roomId_userId: { roomId, userId } },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('접근 권한이 없습니다.');
+    }
+
+    await this.prisma.room.delete({ where: { id: roomId } });
+  }
+
+  /**
    * 1대1 DIRECT 채팅방을 생성하고 두 유저를 멤버로 등록한다.
    * 이미 두 유저 간 DIRECT 방이 존재하면 기존 방을 반환한다.
    */
