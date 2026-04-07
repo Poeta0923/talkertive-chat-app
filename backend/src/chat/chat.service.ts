@@ -133,6 +133,18 @@ export class ChatService {
   }
 
   /**
+   * 채팅방의 활성 멤버 userId 목록을 반환한다.
+   * 새 메시지 발생 시 각 멤버의 개인 채널(user:<userId>)로 room-list-updated를 보내는 데 사용한다.
+   */
+  async getActiveMemberIds(roomId: string): Promise<string[]> {
+    const members = await this.prisma.roomMember.findMany({
+      where: { roomId, leftAt: null },
+      select: { userId: true },
+    });
+    return members.map((m) => m.userId);
+  }
+
+  /**
    * 요청자가 해당 방의 활성 멤버(leftAt === null)인지 검증한다.
    * WebSocket 이벤트 처리 전 공통으로 호출해 권한을 체크한다.
    */

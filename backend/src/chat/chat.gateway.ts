@@ -75,6 +75,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // 검증된 사용자 정보를 socket.data에 저장해 이후 모든 이벤트에서 재사용한다
       client.data.user = payload;
+
+      // 개인 채널(user:<userId>)에 자동 join한다.
+      // 이 채널을 통해 사용자가 어떤 방에 들어가 있지 않더라도
+      // 자신이 속한 방의 새 메시지 알림(room-list-updated)을 받을 수 있다.
+      await client.join(`user:${payload.sub}`);
+
       console.log(`[Chat] 연결됨: userId=${payload.sub}, socketId=${client.id}`);
     } catch {
       // 인증 실패 시 연결을 즉시 끊는다
@@ -155,6 +161,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // client.to(roomName).emit — 발신자를 제외한 나머지에게만 보낸다
     // 발신자도 UI를 서버 기준으로 동기화해야 하므로 server.to를 사용한다
     this.server.to(`room:${dto.roomId}`).emit('new-message', message);
+
+    // 해당 방의 모든 활성 멤버 개인 채널(user:<userId>)로 room-list-updated를 전송한다.
+    // 멤버가 채팅방 목록 화면에 있더라도 특정 방에 join하지 않은 상태이므로,
+    // 개인 채널을 통해 목록 갱신 신호를 받아야 UI를 즉시 업데이트할 수 있다.
+    const memberIds = await this.chatService.getActiveMemberIds(dto.roomId);
+    const roomListPayload = {
+      roomId: dto.roomId,
+      lastMessage: {
+        id: message.id,
+        content: message.content,
+        createdAt: message.createdAt,
+        sender: message.sender,
+      },
+    };
+    for (const memberId of memberIds) {
+      this.server.to(`user:${memberId}`).emit('room-list-updated', roomListPayload);
+    }
 
     return { event: 'message-sent', data: { message } };
   }
