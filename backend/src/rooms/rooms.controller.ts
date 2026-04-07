@@ -72,14 +72,14 @@ export class RoomsController {
     return this.roomsService.findOneGroupRoom(roomId);
   }
 
-  @Get('direct')
+  @Get('my')
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: '내가 참여 중인 DIRECT 채팅방 목록 조회' })
-  @ApiOkResponse({ description: '상대방 유저 정보가 포함된 DIRECT 채팅방 목록', type: RoomEntity, isArray: true })
-  findAllDirectRooms(@Req() req: Request) {
+  @ApiOperation({ summary: '내가 참여 중인 모든 채팅방 목록 조회 (DIRECT + GROUP, 마지막 메시지순)' })
+  @ApiOkResponse({ description: '마지막 메시지·안 읽은 수가 포함된 내 채팅방 목록', type: RoomEntity, isArray: true })
+  findMyRooms(@Req() req: Request) {
     const userId = (req.user as { sub: string }).sub;
-    return this.roomsService.findAllDirectRooms(userId);
+    return this.roomsService.findMyRooms(userId);
   }
 
   @Get('direct/:roomId')
