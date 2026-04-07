@@ -115,6 +115,81 @@ export class RoomsService {
   }
 
   /**
+   * 내가 활성 멤버로 참여 중인 모든 채팅방(DIRECT + GROUP) 목록을 반환한다.
+   * 각 방마다 마지막 메시지와 안 읽은 메시지 수를 포함한다.
+   * 마지막 메시지 기준 최신순으로 정렬하며, 메시지가 없는 방은 맨 뒤로 밀린다.
+   */
+  async findMyRooms(userId: string) {
+    const rooms = await this.prisma.room.findMany({
+      where: {
+        members: { some: { userId, leftAt: null } },
+      },
+      include: {
+        // 마지막 메시지 1개만 가져온다 (soft delete된 메시지 제외)
+        messages: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            sender: { select: { id: true, name: true, image: true } },
+          },
+        },
+        // 활성 멤버 전체를 포함한다.
+        // DIRECT 방에서는 상대방 정보를 꺼내는 데 사용하고,
+        // GROUP 방에서는 _count.members로 인원 수를 표시한다.
+        members: {
+          where: { leftAt: null },
+          select: {
+            userId: true,
+            role: true,
+            lastReadAt: true,
+            user: { select: { id: true, name: true, image: true } },
+          },
+        },
+        _count: {
+          select: { members: { where: { leftAt: null } } },
+        },
+      },
+    });
+
+    // 방마다 안 읽은 메시지 수를 계산한다.
+    // N+1이 발생하지만 Promise.all로 병렬 처리해 영향을 최소화한다.
+    const result = await Promise.all(
+      rooms.map(async (room) => {
+        const myMember = room.members.find((m) => m.userId === userId);
+        const lastReadAt = myMember?.lastReadAt ?? null;
+
+        const unreadCount = await this.prisma.message.count({
+          where: {
+            roomId: room.id,
+            deletedAt: null,
+            // lastReadAt이 null이면 모든 메시지가 안 읽은 상태이므로 조건을 생략한다
+            ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+          },
+        });
+
+        const { messages, ...rest } = room;
+        return {
+          ...rest,
+          myRole: myMember?.role,
+          lastMessage: messages[0] ?? null,
+          unreadCount,
+        };
+      }),
+    );
+
+    // 마지막 메시지 시각 기준 내림차순 정렬 (메시지 없는 방은 0으로 처리해 맨 뒤로)
+    return result.sort((a, b) => {
+      const aTime = a.lastMessage?.createdAt?.getTime() ?? 0;
+      const bTime = b.lastMessage?.createdAt?.getTime() ?? 0;
+      return bTime - aTime;
+    });
+  }
+
+  /**
    * 내가 참여 중인 DIRECT 채팅방 단건 조회. 상대방 유저 정보를 함께 반환한다.
    */
   async findOneDirectRoom(userId: string, roomId: string) {
@@ -143,24 +218,6 @@ export class RoomsService {
     }
 
     return room;
-  }
-
-  /**
-   * 내가 참여 중인 DIRECT 채팅방 목록 조회. 각 방의 상대방 유저 정보를 함께 반환한다.
-   */
-  async findAllDirectRooms(userId: string) {
-    return this.prisma.room.findMany({
-      where: {
-        type: RoomType.DIRECT,
-        members: { some: { userId } },
-      },
-      include: {
-        members: {
-          where: { userId: { not: userId } },
-          include: { user: { select: { id: true, name: true, image: true } } },
-        },
-      },
-    });
   }
 
   /**
