@@ -1,24 +1,25 @@
-"use client";
+'use client';
 
 import { useApi } from "@/hooks/useApi";
 import { useQuery } from "@tanstack/react-query";
 
 export default function ClientTest() {
-  const api = useApi();
+    const api = useApi()
 
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["user-test"],
-    queryFn: () => api.getUserTest(),
-  });
+    const { data, error, isLoading } =  useQuery({
+        queryKey: ['user-test'],
+        queryFn: () => api.getUserTest(),
+    });
 
-  if (isLoading) {
-    return <div>로딩중 ...</div>;
-  }
+    if (isLoading) {
+        return <div>로딩중 ...</div>
+    }
+    if (!data) return null;
 
-  return (
-    <div className="p-8">
-      <h2>서버 컴포넌트 API 테스트 결과</h2>
-      <pre>{data}</pre>
-    </div>
-  );
+    return (
+        <div className='p-8'>
+            <h2>서버 컴포넌트 API 테스트 결과</h2>
+            <pre>{data.data}</pre>
+        </div>
+    );   
 }
