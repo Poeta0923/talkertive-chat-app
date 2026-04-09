@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BookOpen, Dumbbell, UtensilsCrossed, Plane, Palette, Drama, Laptop, LayoutGrid } from 'lucide-react';
 
 const CATEGORIES = [
@@ -14,17 +14,21 @@ const CATEGORIES = [
   { key: 'ETC', label: '기타', icon: LayoutGrid },
 ] as const;
 
-interface CategoryFilterProps {
-  onSelect?: (category: string | null) => void;
-}
-
-export default function CategoryFilter({ onSelect }: CategoryFilterProps) {
-  const [selected, setSelected] = useState<string | null>(null);
+export default function CategoryFilter() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selected = searchParams.get('category');
 
   const handleClick = (key: string) => {
-    const next = selected === key ? null : key;
-    setSelected(next);
-    onSelect?.(next);
+    const params = new URLSearchParams(searchParams.toString());
+    if (selected === key) {
+      params.delete('category');
+    } else {
+      params.set('category', key);
+    }
+    // 카테고리 변경 시 페이지 초기화
+    params.delete('page');
+    router.push(`?${params.toString()}`);
   };
 
   return (
