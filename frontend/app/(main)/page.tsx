@@ -8,11 +8,11 @@ import Link from 'next/link';
 const PAGE_SIZE = 15;
 
 interface HomeProps {
-  searchParams: Promise<{ page?: string; category?: string }>;
+  searchParams: Promise<{ page?: string; category?: string; search?: string }>;
 }
 
 export default async function Home({ searchParams }: HomeProps) {
-  const { page: pageParam, category } = await searchParams;
+  const { page: pageParam, category, search } = await searchParams;
   const page = Math.max(1, Number(pageParam ?? 1));
   const skip = (page - 1) * PAGE_SIZE;
 
@@ -23,6 +23,7 @@ export default async function Home({ searchParams }: HomeProps) {
         skip,
         take: PAGE_SIZE + 1,
         ...(category && { category: category as NonNullable<RoomsControllerFindAllGroupRoomsData['query']>['category'] }),
+        ...(search && { search }),
       },
     }),
   ]);
@@ -53,7 +54,7 @@ export default async function Home({ searchParams }: HomeProps) {
           <div className="flex justify-center items-center gap-4 mt-10">
             {page > 1 ? (
               <Link
-                href={`?${new URLSearchParams({ ...(category && { category }), page: String(page - 1) })}`}
+                href={`?${new URLSearchParams({ ...(category && { category }), ...(search && { search }), page: String(page - 1) })}`}
                 className="px-5 py-2 border border-border rounded-full text-sm hover:bg-muted transition-colors"
               >
                 이전
@@ -66,7 +67,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
             {hasNext ? (
               <Link
-                href={`?${new URLSearchParams({ ...(category && { category }), page: String(page + 1) })}`}
+                href={`?${new URLSearchParams({ ...(category && { category }), ...(search && { search }), page: String(page + 1) })}`}
                 className="px-5 py-2 border border-border rounded-full text-sm hover:bg-muted transition-colors"
               >
                 다음
