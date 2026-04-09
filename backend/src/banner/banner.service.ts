@@ -1,14 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateBannerDto } from './dto/create-banner.dto';
 
 @Injectable()
 export class BannerService {
   constructor(private prisma: PrismaService) {}
-
-  async create(dto: CreateBannerDto) {
-    return this.prisma.banner.create({ data: dto });
-  }
 
   async findAll() {
     return this.prisma.banner.findMany({ orderBy: { createdAt: 'asc' } });
