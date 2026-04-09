@@ -1,4 +1,5 @@
 import Banner from '@/components/Banner';
+import CategoryFilter from '@/components/CategoryFilter';
 import { bannerControllerFindAll } from '@/generated/openapi-client';
 
 export default async function Home() {
@@ -7,6 +8,7 @@ export default async function Home() {
   return (
     <div>
       <Banner banners={banners ?? []} />
+      <CategoryFilter />
     </div>
   );
 }
