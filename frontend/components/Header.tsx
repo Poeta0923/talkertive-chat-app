@@ -1,5 +1,5 @@
 import { auth, signOut } from '@/auth';
-import { Search } from 'lucide-react';
+import SearchBar from '@/components/SearchBar';
 import Link from 'next/link';
 
 export default async function Header() {
@@ -13,14 +13,7 @@ export default async function Header() {
       </Link>
 
       <div className="absolute left-1/2 -translate-x-1/2">
-        <div className="flex items-center gap-2 px-4 h-11 border border-border rounded-full w-[40vw]">
-          <Search className="w-5 h-5 text-muted-foreground shrink-0" />
-          <input
-            type="text"
-            placeholder="검색어로 그룹을 검색하세요!"
-            className="flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground"
-          />
-        </div>
+        <SearchBar />
       </div>
 
       <div className="ml-auto flex items-center shrink-0">
