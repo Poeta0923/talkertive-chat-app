@@ -15,26 +15,29 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const config = new DocumentBuilder()
-    .setTitle('Talkertive API')
-    .setDescription('Talkertive API 문서입니다.')
-    .setVersion('1.0')
-    // @ApiBearerAuth('access-token') 데코레이터와 이름을 맞춰야 Swagger UI에서 인증이 연동됨
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'access-token',
-        description: 'Enter access token',
-        in: 'header',
-      },
-      'access-token',
-    )
-    .build();
+  // Swagger는 개발 환경에서만 활성화 — 프로덕션에서 API 구조 노출 방지
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Talkertive API')
+      .setDescription('Talkertive API 문서입니다.')
+      .setVersion('1.0')
+      // @ApiBearerAuth('access-token') 데코레이터와 이름을 맞춰야 Swagger UI에서 인증이 연동됨
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'access-token',
+          description: 'Enter access token',
+          in: 'header',
+        },
+        'access-token',
+      )
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+  }
 
   await app.listen(process.env.PORT ?? 8000);
 }
