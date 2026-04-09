@@ -5,7 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateGroupRoomDto } from './dto/create-group-room.dto';
 import { CreateDirectRoomDto } from './dto/create-direct-room.dto';
 import { UpdateGroupRoomDto } from './dto/update-group-room.dto';
-import { Prisma, Room, RoomType } from 'generated/prisma';
+import { Prisma, Room, RoomCategory, RoomType } from 'generated/prisma';
 
 @Injectable()
 export class RoomsService {
@@ -95,8 +95,10 @@ export class RoomsService {
     cursor?: Prisma.RoomWhereUniqueInput;
     where?: Prisma.RoomWhereInput;
     orderBy?: Prisma.RoomOrderByWithRelationInput;
+    search?: string;
+    category?: RoomCategory;
   }) {
-    const { skip, take, cursor, where, orderBy } = params;
+    const { skip, take, cursor, where, orderBy, search, category } = params;
 
     return this.prisma.room.findMany({
       skip,
@@ -106,6 +108,8 @@ export class RoomsService {
         ...where,
         type: RoomType.GROUP,
         date: { gte: new Date() },
+        ...(search && { name: { contains: search, mode: 'insensitive' } }),
+        ...(category && { category }),
       },
       orderBy: orderBy ?? { date: 'asc' },
       include: {

@@ -6,6 +6,7 @@ import { CreateDirectRoomDto } from './dto/create-direct-room.dto';
 import { UpdateGroupRoomDto } from './dto/update-group-room.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { Room as RoomEntity } from '../_gen/prisma-class/room';
+import { RoomCategory } from 'generated/prisma';
 import type { Request } from 'express';
 
 @ApiTags('rooms')
@@ -53,15 +54,21 @@ export class RoomsController {
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
   @ApiQuery({ name: 'cursor', required: false, type: String, description: '마지막 항목의 roomId' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: '방 이름 검색어' })
+  @ApiQuery({ name: 'category', required: false, enum: RoomCategory, description: '카테고리 필터' })
   findAllGroupRooms(
     @Query('skip') skip?: string,
     @Query('take') take?: string,
     @Query('cursor') cursor?: string,
+    @Query('search') search?: string,
+    @Query('category') category?: RoomCategory,
   ) {
     return this.roomsService.findAllGroupRooms({
       skip: skip ? Number(skip) : undefined,
       take: take ? Number(take) : undefined,
       cursor: cursor ? { id: cursor } : undefined,
+      search,
+      category,
     });
   }
 
