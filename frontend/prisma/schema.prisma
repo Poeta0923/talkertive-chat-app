@@ -19,6 +19,7 @@ model User {
   emailVerified  DateTime? @map("email_verified")
   image          String?
   hashedPassword String?   @map("hashed_password") // Credentials 로그인용 (OAuth 유저는 null)
+  role           String    @default("USER")
 
   accounts     Account[]
   sessions     Session[]
@@ -221,6 +222,21 @@ model MessageAttachment {
 enum AttachmentType {
   IMAGE
   FILE
+}
+
+// ──────────────────────────────────────────
+// 배너
+// ──────────────────────────────────────────
+
+model Banner {
+  id       String @id @default(cuid())
+  imageUrl String @map("image_url")
+  linkUrl  String @map("link_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("banners")
 }
 
 // ──────────────────────────────────────────
