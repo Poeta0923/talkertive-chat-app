@@ -5,7 +5,7 @@ import * as api from '@/lib/api'
 
 const AUTH_COOKIE_NAME =
     process.env.NODE_ENV === "production"
-    ? "Secure-authjs.session-token"
+    ? "__Secure-authjs.session-token"
     : "authjs.session-token";
 
 export function useApi() {
