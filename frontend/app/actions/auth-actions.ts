@@ -1,7 +1,12 @@
 'use server'
 
+import { signOut } from "@/auth";
 import { saltAndHashPassword } from "@/lib/password-utils";
 import { prisma } from "@/prisma";
+
+export async function logout() {
+  await signOut({ redirectTo: '/' });
+}
 
 export async function signUp({
     email,
