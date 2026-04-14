@@ -19,6 +19,7 @@ model User {
   emailVerified  DateTime? @map("email_verified")
   image          String?
   hashedPassword String?   @map("hashed_password") // Credentials 로그인용 (OAuth 유저는 null)
+  description    String?
   role           String    @default("USER")
 
   accounts     Account[]
