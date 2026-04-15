@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { roomsControllerFindOneGroupRoom } from '@/generated/openapi-client';
 import type { RoomCategory } from '@/generated/openapi-client';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 
@@ -32,11 +33,12 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
   }
 
   const owner = room.members.find((m) => m.role === 'OWNER');
+  const isOwner = session?.user?.id === owner?.user.id;
 
   return (
     <div>
-      {/* 커버 이미지 영역 */}
-      <div className="w-full aspect-5/1 bg-black relative overflow-hidden">
+      {/* 커버 이미지 영역 — 배너 전체 영역(이미지+양측 검정)과 동일한 비율(9:2) */}
+      <div className="w-full aspect-9/2 bg-black relative overflow-hidden">
         {room.coverImage && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -49,7 +51,17 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
 
       {/* 본문 영역 */}
       <div className="max-w-3xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold mb-8">{room.name}</h1>
+        <div className="flex items-center gap-3 mb-8">
+          <h1 className="text-3xl font-bold">{room.name}</h1>
+          {isOwner && (
+            <Link
+              href={`/rooms/${roomId}/edit`}
+              className="px-3 py-1.5 text-sm font-medium border border-border rounded-md hover:bg-muted transition-colors shrink-0"
+            >
+              수정하기
+            </Link>
+          )}
+        </div>
 
         {room.description ? (
           <div className="prose prose-neutral max-w-none">
@@ -114,7 +126,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               )}
             </div>
             <span className="font-medium flex-1">{owner.user.name ?? '알 수 없음'}</span>
-            {session && (
+            {session && !isOwner && (
               <button className="px-4 py-2 text-sm font-medium border border-border rounded-md hover:bg-muted transition-colors cursor-pointer">
                 가입 문의
               </button>
