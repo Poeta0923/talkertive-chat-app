@@ -77,5 +77,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   pages: {},
-  callbacks: {},
+  callbacks: {
+    session({ session, token }) {
+      // JWT 전략에서는 token.sub에 userId가 담겨 있으므로 session.user.id에 복사
+      if (token.sub) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
+  },
 });
