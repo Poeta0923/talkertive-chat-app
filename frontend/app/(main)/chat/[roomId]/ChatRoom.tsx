@@ -5,8 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { getCookie } from 'cookies-next/client';
 import Link from 'next/link';
 import { ChevronLeft, Send, Pencil, Trash2, Check, X } from 'lucide-react';
-import { format, isToday } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { formatTime } from '@/lib/utils';
 
 const AUTH_COOKIE_NAME =
   process.env.NODE_ENV === 'production'
@@ -191,11 +190,6 @@ export default function ChatRoom({
     socketRef.current?.emit('delete-message', { messageId });
   };
 
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    if (isToday(date)) return format(date, 'a h:mm', { locale: ko });
-    return format(date, 'M월 d일 a h:mm', { locale: ko });
-  };
 
   const canDelete = (msg: Message) =>
     msg.senderId === currentUserId || currentUserRole === 'OWNER';

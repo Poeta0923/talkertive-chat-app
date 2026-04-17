@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { getAuthToken } from '@/lib/auth-client';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -26,14 +27,11 @@ export function useChatSocket({ onRoomListUpdated }: UseChatSocketOptions) {
   callbackRef.current = onRoomListUpdated;
 
   useEffect(() => {
-    // httpOnly 쿠키는 JS에서 읽을 수 없으므로 Route Handler를 통해 토큰을 가져온다
-    fetch('/api/auth/token')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { token: string } | null) => {
-        if (!data?.token) return;
+    getAuthToken().then((token) => {
+        if (!token) return;
 
         const socket = io(`${BACKEND_URL}/chat`, {
-          auth: { token: data.token },
+          auth: { token },
           transports: ['websocket'],
         });
 
