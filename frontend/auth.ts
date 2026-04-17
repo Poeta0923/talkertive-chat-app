@@ -10,7 +10,8 @@ import { JWT } from "next-auth/jwt";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   useSecureCookies: process.env.NODE_ENV === "production",
   trustHost: true,
-  adapter: PrismaAdapter(prisma),
+  // 커스텀 Prisma 출력 경로(generated/prisma)와 @auth/prisma-adapter가 기대하는 @prisma/client 타입 간 명목적 불일치 우회
+  adapter: PrismaAdapter(prisma as any),
   secret: process.env.AUTH_SECRET,
   providers: [
     // Google OAuth — Account 테이블에 provider 정보가 저장되고 User와 연결됨

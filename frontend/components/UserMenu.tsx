@@ -6,9 +6,10 @@ import { useEffect, useRef, useState } from 'react';
 
 interface UserMenuProps {
   name: string;
+  onChatClick: () => void;
 }
 
-export default function UserMenu({ name }: UserMenuProps) {
+export default function UserMenu({ name, onChatClick }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,13 +42,12 @@ export default function UserMenu({ name }: UserMenuProps) {
           >
             마이페이지
           </Link>
-          <Link
-            href="/chat"
-            onClick={() => setIsOpen(false)}
-            className="block px-4 py-3 text-sm hover:bg-muted transition-colors"
+          <button
+            onClick={() => { setIsOpen(false); onChatClick(); }}
+            className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors cursor-pointer"
           >
             내 채팅
-          </Link>
+          </button>
           <form action={logout}>
             <button
               type="submit"
