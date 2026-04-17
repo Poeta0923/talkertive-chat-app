@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
 import SearchBar from '@/components/SearchBar';
-import UserMenu from '@/components/UserMenu';
+import HeaderClient from '@/components/HeaderClient';
 import Link from 'next/link';
 
 export default async function Header() {
@@ -19,7 +19,7 @@ export default async function Header() {
 
       <div className="ml-auto flex items-center shrink-0 pr-8">
         {user ? (
-          <UserMenu name={user.name ?? '사용자'} />
+          <HeaderClient userId={user.id} userName={user.name ?? '사용자'} />
         ) : (
           <Link
             href="/signin"

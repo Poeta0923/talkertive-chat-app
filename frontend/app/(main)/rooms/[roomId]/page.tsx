@@ -4,6 +4,7 @@ import type { RoomCategory } from '@/generated/openapi-client';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+import InquiryButton from './InquiryButton';
 
 const CATEGORY_LABEL: Record<RoomCategory, string> = {
   STUDY: '스터디',
@@ -126,10 +127,8 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               )}
             </div>
             <span className="font-medium flex-1">{owner.user.name ?? '알 수 없음'}</span>
-            {session && !isOwner && (
-              <button className="px-4 py-2 text-sm font-medium border border-border rounded-md hover:bg-muted transition-colors cursor-pointer">
-                가입 문의
-              </button>
+            {session && !isOwner && owner && (
+              <InquiryButton ownerUserId={owner.user.id} />
             )}
           </div>
         )}
