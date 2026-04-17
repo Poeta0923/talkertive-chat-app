@@ -14,15 +14,32 @@ export class ChatService {
    * 전송 전에 요청자가 해당 방의 활성 멤버인지 확인한다.
    */
   async sendMessage(senderId: string, dto: SendMessageDto) {
-    const { roomId, content } = dto;
+    const { roomId, content, attachments } = dto;
 
     await this.assertActiveMember(senderId, roomId);
 
-    // 메시지 저장 후 sender 정보를 함께 반환해 클라이언트에서 바로 렌더링할 수 있게 한다
+    // 메시지 저장 후 sender 정보와 첨부파일을 함께 반환해 클라이언트에서 바로 렌더링할 수 있게 한다
     return this.prisma.message.create({
-      data: { roomId, senderId, content },
+      data: {
+        roomId,
+        senderId,
+        content,
+        ...(attachments?.length && {
+          attachments: {
+            create: attachments.map((a) => ({
+              url: a.url,
+              name: a.name,
+              size: a.size,
+              mimeType: a.mimeType,
+              // mimeType 접두사로 IMAGE / FILE 타입을 구분한다
+              type: a.mimeType.startsWith('image/') ? 'IMAGE' : 'FILE',
+            })),
+          },
+        }),
+      },
       include: {
         sender: { select: { id: true, name: true, image: true } },
+        attachments: true,
       },
     });
   }
