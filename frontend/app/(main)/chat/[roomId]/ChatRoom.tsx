@@ -248,7 +248,7 @@ export default function ChatRoom({
                     )}
                     <div className="flex items-end gap-1.5 group">
                       <div
-                        className={`rounded-2xl rounded-bl-sm px-3 py-2 text-sm break-words ${
+                        className={`rounded-2xl rounded-bl-sm px-3 py-2 text-sm wrap-break-word ${
                           isDeleted ? 'bg-muted text-muted-foreground italic' : 'bg-muted'
                         }`}
                       >
@@ -338,7 +338,7 @@ export default function ChatRoom({
                         {formatTime(msg.createdAt)}
                       </span>
                       <div
-                        className={`rounded-2xl rounded-br-sm px-3 py-2 text-sm break-words ${
+                        className={`rounded-2xl rounded-br-sm px-3 py-2 text-sm wrap-break-word ${
                           isDeleted
                             ? 'bg-muted text-muted-foreground italic'
                             : 'bg-foreground text-background'
