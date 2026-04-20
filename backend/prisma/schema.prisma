@@ -105,9 +105,10 @@ model Room {
   address          String? // 모임 장소 주소
   date             DateTime? // 모임 일정 (DIRECT 채팅은 null)
 
-  members  RoomMember[]
-  messages Message[]
-  likes    RoomLike[]
+  members   RoomMember[]
+  messages  Message[]
+  likes     RoomLike[]
+  schedules RoomSchedule[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -129,6 +130,24 @@ enum RoomCategory {
   CULTURE // 문화/예술
   TECH // IT/기술
   ETC // 기타
+}
+
+// ──────────────────────────────────────────
+// 모임 일정
+// ──────────────────────────────────────────
+
+model RoomSchedule {
+  id     String   @id @default(cuid())
+  roomId String   @map("room_id")
+  name   String
+  time   DateTime
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("room_schedules")
 }
 
 // ──────────────────────────────────────────
