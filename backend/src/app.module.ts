@@ -10,10 +10,11 @@ import { ChatModule } from './chat/chat.module';
 import { BannerModule } from './banner/banner.module';
 import { MediaModule } from './media/media.module';
 import { UsersModule } from './users/users.module';
+import { SchedulesModule } from './schedules/schedules.module';
 
 @Module({
   // isGlobal: true — 모든 모듈에서 ConfigModule을 별도 import 없이 환경변수 사용 가능
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, PrismaModule, RoomsModule, RoomMembersModule, ChatModule, BannerModule, MediaModule, UsersModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, PrismaModule, RoomsModule, RoomMembersModule, ChatModule, BannerModule, MediaModule, UsersModule, SchedulesModule],
   controllers: [AppController],
   providers: [AppService],
 })
