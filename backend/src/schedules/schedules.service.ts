@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AiScheduleRequestDto, ActionType } from './dto/ai-schedule-request.dto';
+import { AiScheduleRequestDto } from './dto/ai-schedule-request.dto';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { RoomSchedule } from 'generated/prisma';
@@ -247,9 +247,12 @@ Return format by action_type:
       .map((block) => (block as { type: 'text'; text: string }).text)
       .join('');
 
+    // 마크다운 코드블록(```json ... ``` 또는 ``` ... ```)을 제거한다
+    const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+
     let parsed: ClaudeScheduleResult;
     try {
-      parsed = JSON.parse(rawText) as ClaudeScheduleResult;
+      parsed = JSON.parse(cleaned) as ClaudeScheduleResult;
     } catch {
       throw new InternalServerErrorException('AI 응답 파싱에 실패했습니다.');
     }
