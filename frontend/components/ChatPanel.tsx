@@ -3,10 +3,11 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Link from 'next/link';
-import { ChevronRight, ExternalLink, Send, Pencil, Trash2, Check, X, Paperclip } from 'lucide-react';
+import { ChevronRight, ExternalLink, CalendarDays, Send, Pencil, Trash2, Check, X, Paperclip } from 'lucide-react';
 import type { MyRoom } from '@/hooks/useMyRooms';
 import { formatTime } from '@/lib/utils';
 import { getAuthToken } from '@/lib/auth-client';
+import RoomScheduleCalendar from './RoomScheduleCalendar';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -44,6 +45,9 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
   const [editContent, setEditContent] = useState('');
   const [typingUserIds, setTypingUserIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarTriggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -281,7 +285,7 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
   };
 
   return (
-    <div className="w-105 h-full bg-background border-l border-border flex flex-col">
+    <div ref={panelRef} className="w-105 h-full bg-background border-l border-border flex flex-col">
       {/* 헤더 */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-border shrink-0">
         <button
@@ -292,13 +296,30 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
         </button>
         <span className="font-semibold text-sm truncate flex-1">{roomName}</span>
         {room.type === 'GROUP' && (
-          <Link
-            href={`/rooms/${roomId}`}
-            className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground"
-            title="모임 페이지로 이동"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </Link>
+          <div className="flex items-center gap-1">
+            <button
+              ref={calendarTriggerRef}
+              onClick={() => setIsCalendarOpen((prev) => !prev)}
+              className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground cursor-pointer"
+              title="방 일정 보기"
+            >
+              <CalendarDays className="w-4 h-4" />
+            </button>
+            <RoomScheduleCalendar
+              isOpen={isCalendarOpen}
+              onClose={() => setIsCalendarOpen(false)}
+              roomId={roomId}
+              triggerRef={calendarTriggerRef}
+              containerRef={panelRef}
+            />
+            <Link
+              href={`/rooms/${roomId}`}
+              className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground"
+              title="모임 페이지로 이동"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </Link>
+          </div>
         )}
       </div>
 
