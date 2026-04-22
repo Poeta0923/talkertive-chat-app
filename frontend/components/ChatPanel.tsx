@@ -309,6 +309,7 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
               isOpen={isCalendarOpen}
               onClose={() => setIsCalendarOpen(false)}
               roomId={roomId}
+              isOwner={currentUserRole === 'OWNER'}
               triggerRef={calendarTriggerRef}
               containerRef={panelRef}
             />
