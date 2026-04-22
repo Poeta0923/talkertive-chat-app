@@ -1,8 +1,11 @@
 'use server';
 
 import {
+  schedulesControllerCreateSchedule,
+  schedulesControllerDeleteSchedule,
   schedulesControllerFindMySchedules,
   schedulesControllerFindRoomSchedules,
+  schedulesControllerUpdateSchedule,
 } from '@/generated/openapi-client';
 
 export interface MySchedule {
@@ -43,4 +46,47 @@ export async function getRoomSchedules(roomId: string): Promise<RoomSchedule[]> 
   }
 
   return data as unknown as RoomSchedule[];
+}
+
+export async function createSchedule(
+  roomId: string,
+  name: string,
+  time: string,
+): Promise<RoomSchedule | null> {
+  const { data, error } = await schedulesControllerCreateSchedule({
+    path: { roomId },
+    body: { name, time },
+  });
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as unknown as RoomSchedule;
+}
+
+export async function deleteSchedule(roomId: string, scheduleId: string): Promise<boolean> {
+  const { error } = await schedulesControllerDeleteSchedule({
+    path: { roomId, scheduleId },
+  });
+
+  return !error;
+}
+
+export async function updateSchedule(
+  roomId: string,
+  scheduleId: string,
+  name: string,
+  time: string,
+): Promise<RoomSchedule | null> {
+  const { data, error } = await schedulesControllerUpdateSchedule({
+    path: { roomId, scheduleId },
+    body: { name, time },
+  });
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as unknown as RoomSchedule;
 }
