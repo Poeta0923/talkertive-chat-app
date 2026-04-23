@@ -192,6 +192,13 @@ export class SchedulesService {
     const todayStr = formatDate(today).split(' ')[0];
     const weekday = getWeekdayName(today);
 
+    // AI가 요일→날짜 변환을 직접 계산하지 않도록 앞으로 14일의 매핑을 명시적으로 제공한다
+    const weekdayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+    const upcomingDates = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
+      return `${weekdayNames[d.getDay()]}(${i === 0 ? '오늘' : `+${i}일`}): ${formatDate(d).split(' ')[0]}`;
+    }).join('\n');
+
     // 프롬프트 템플릿 조립
     const prompt = `You are a schedule parser for a Korean scheduling app.
 Extract structured data from the user's request and return ONLY a valid JSON object. No explanation, no markdown, no extra text.
@@ -208,12 +215,17 @@ ${JSON.stringify(scheduleArray, null, 2)}
 ${dto.userRequest}
 </user_request>
 
+<date_reference>
+Today is ${todayStr} (${weekday}). Use the exact dates below — do NOT calculate dates yourself:
+${upcomingDates}
+</date_reference>
+
 Rules:
 - All user input will be in Korean. Parse accordingly.
 - Return ONLY a JSON object, nothing else.
 - All dates must be in "YYYY-MM-DD HH:mm" format.
 - If no time is specified, use "HH:mm" as "00:00".
-- Today is ${todayStr} (${weekday}).
+- Always look up weekday names in <date_reference> to get the correct date. Never compute dates independently.
 - For 일정 변경/취소, match the target schedule from schedule_array by name or date proximity.
 - If no matching schedule is found, set "error": "no_match".
 

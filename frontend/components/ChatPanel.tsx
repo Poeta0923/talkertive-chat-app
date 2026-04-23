@@ -3,11 +3,12 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Link from 'next/link';
-import { ChevronRight, ExternalLink, CalendarDays, Send, Pencil, Trash2, Check, X, Paperclip } from 'lucide-react';
+import { ChevronRight, ExternalLink, CalendarDays, Send, Pencil, Trash2, Check, X, Paperclip, Bot } from 'lucide-react';
 import type { MyRoom } from '@/hooks/useMyRooms';
 import { formatTime } from '@/lib/utils';
 import { getAuthToken } from '@/lib/auth-client';
 import RoomScheduleCalendar from './RoomScheduleCalendar';
+import AiSchedulePanel from './AiSchedulePanel';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -46,7 +47,9 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
   const [typingUserIds, setTypingUserIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const calendarTriggerRef = useRef<HTMLButtonElement>(null);
+  const aiTriggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const socketRef = useRef<Socket | null>(null);
@@ -297,6 +300,21 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
         <span className="font-semibold text-sm truncate flex-1">{roomName}</span>
         {room.type === 'GROUP' && (
           <div className="flex items-center gap-1">
+            <button
+              ref={aiTriggerRef}
+              onClick={() => setIsAiPanelOpen((prev) => !prev)}
+              className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground cursor-pointer"
+              title="AI 일정 관리"
+            >
+              <Bot className="w-4 h-4" />
+            </button>
+            <AiSchedulePanel
+              isOpen={isAiPanelOpen}
+              onClose={() => setIsAiPanelOpen(false)}
+              roomId={roomId}
+              triggerRef={aiTriggerRef}
+              containerRef={panelRef}
+            />
             <button
               ref={calendarTriggerRef}
               onClick={() => setIsCalendarOpen((prev) => !prev)}
