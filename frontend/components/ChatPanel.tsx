@@ -3,12 +3,13 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Link from 'next/link';
-import { ChevronRight, ExternalLink, CalendarDays, Send, Pencil, Trash2, Check, X, Paperclip, Bot } from 'lucide-react';
+import { ChevronRight, ExternalLink, CalendarDays, Send, Pencil, Trash2, Check, X, Paperclip, Bot, Plus } from 'lucide-react';
 import type { MyRoom } from '@/hooks/useMyRooms';
 import { formatTime } from '@/lib/utils';
 import { getAuthToken } from '@/lib/auth-client';
 import RoomScheduleCalendar from './RoomScheduleCalendar';
 import AiSchedulePanel from './AiSchedulePanel';
+import InviteToGroupPanel from './InviteToGroupPanel';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -48,8 +49,10 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
   const [isUploading, setIsUploading] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
   const calendarTriggerRef = useRef<HTMLButtonElement>(null);
   const aiTriggerRef = useRef<HTMLButtonElement>(null);
+  const inviteTriggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const socketRef = useRef<Socket | null>(null);
@@ -298,6 +301,28 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
           <ChevronRight className="w-5 h-5" />
         </button>
         <span className="font-semibold text-sm truncate flex-1">{roomName}</span>
+        {room.type === 'DIRECT' && (() => {
+          const otherUserId = room.members.find((m) => m.userId !== currentUserId)?.userId ?? '';
+          return (
+            <>
+              <button
+                ref={inviteTriggerRef}
+                onClick={() => setIsInviteOpen((prev) => !prev)}
+                className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground cursor-pointer"
+                title="모임 초대"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <InviteToGroupPanel
+                isOpen={isInviteOpen}
+                onClose={() => setIsInviteOpen(false)}
+                targetUserId={otherUserId}
+                triggerRef={inviteTriggerRef}
+                containerRef={panelRef}
+              />
+            </>
+          );
+        })()}
         {room.type === 'GROUP' && (
           <div className="flex items-center gap-1">
             <button
