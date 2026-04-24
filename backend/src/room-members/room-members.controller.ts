@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -22,7 +31,10 @@ export class RoomMembersController {
 
   @Post(':roomId/invite')
   @ApiOperation({ summary: 'GROUP 채팅방에 유저 초대 (OWNER 전용)' })
-  @ApiCreatedResponse({ description: '초대된 멤버 정보', type: RoomMemberEntity })
+  @ApiCreatedResponse({
+    description: '초대된 멤버 정보',
+    type: RoomMemberEntity,
+  })
   inviteMember(
     @Req() req: Request,
     @Param('roomId') roomId: string,
@@ -41,12 +53,21 @@ export class RoomMembersController {
     @Param('targetUserId') targetUserId: string,
   ) {
     const requesterId = (req.user as { sub: string }).sub;
-    return this.roomMembersService.removeMember(requesterId, roomId, targetUserId);
+    return this.roomMembersService.removeMember(
+      requesterId,
+      roomId,
+      targetUserId,
+    );
   }
 
   @Patch(':roomId/transfer-owner')
-  @ApiOperation({ summary: 'OWNER 권한 이전 (OWNER 전용) — 기존 OWNER는 MEMBER로 강등' })
-  @ApiOkResponse({ description: '새 OWNER의 멤버 정보', type: RoomMemberEntity })
+  @ApiOperation({
+    summary: 'OWNER 권한 이전 (OWNER 전용) — 기존 OWNER는 MEMBER로 강등',
+  })
+  @ApiOkResponse({
+    description: '새 OWNER의 멤버 정보',
+    type: RoomMemberEntity,
+  })
   transferOwner(
     @Req() req: Request,
     @Param('roomId') roomId: string,

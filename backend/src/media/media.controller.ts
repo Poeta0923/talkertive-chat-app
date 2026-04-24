@@ -31,9 +31,16 @@ const FILE_SIZE_LIMIT = 100 * 1024 * 1024; // 100MB
 
 const IMAGE_INTERCEPTOR_OPTIONS = {
   limits: { fileSize: FILE_SIZE_LIMIT },
-  fileFilter: (_req: unknown, file: Express.Multer.File, cb: (error: Error | null, accept: boolean) => void) => {
+  fileFilter: (
+    _req: unknown,
+    file: Express.Multer.File,
+    cb: (error: Error | null, accept: boolean) => void,
+  ) => {
     if (!file.mimetype.startsWith('image/')) {
-      return cb(new BadRequestException('이미지 파일만 업로드 가능합니다.'), false);
+      return cb(
+        new BadRequestException('이미지 파일만 업로드 가능합니다.'),
+        false,
+      );
     }
     cb(null, true);
   },
@@ -51,10 +58,19 @@ const ALLOWED_ATTACHMENT_MIMETYPES = [
 
 const ATTACHMENT_INTERCEPTOR_OPTIONS = {
   limits: { fileSize: FILE_SIZE_LIMIT },
-  fileFilter: (_req: unknown, file: Express.Multer.File, cb: (error: Error | null, accept: boolean) => void) => {
-    const isAllowed = ALLOWED_ATTACHMENT_MIMETYPES.some((type) => file.mimetype.startsWith(type));
+  fileFilter: (
+    _req: unknown,
+    file: Express.Multer.File,
+    cb: (error: Error | null, accept: boolean) => void,
+  ) => {
+    const isAllowed = ALLOWED_ATTACHMENT_MIMETYPES.some((type) =>
+      file.mimetype.startsWith(type),
+    );
     if (!isAllowed) {
-      return cb(new BadRequestException('지원하지 않는 파일 형식입니다.'), false);
+      return cb(
+        new BadRequestException('지원하지 않는 파일 형식입니다.'),
+        false,
+      );
     }
     cb(null, true);
   },
@@ -90,9 +106,15 @@ export class MediaController {
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FileInterceptor('file', IMAGE_INTERCEPTOR_OPTIONS))
   @ApiFileUpload('유저 프로필 이미지 업로드', '프로필 이미지 (jpg, png 등)')
-  async uploadUserProfile(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+  async uploadUserProfile(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
+  ) {
     if (!file) throw new BadRequestException('파일이 없습니다');
-    return this.mediaService.uploadUserProfile(file, req.user!.sub);
+    return this.mediaService.uploadUserProfile(
+      file,
+      (req.user as { sub: string }).sub,
+    );
   }
 
   @Post('rooms/:roomId/cover')
@@ -105,7 +127,11 @@ export class MediaController {
     @Req() req: Request,
   ) {
     if (!file) throw new BadRequestException('파일이 없습니다');
-    return this.mediaService.uploadRoomCover(file, roomId, req.user!.sub);
+    return this.mediaService.uploadRoomCover(
+      file,
+      roomId,
+      (req.user as { sub: string }).sub,
+    );
   }
 
   @Post('rooms/:roomId/profile')
@@ -118,7 +144,11 @@ export class MediaController {
     @Req() req: Request,
   ) {
     if (!file) throw new BadRequestException('파일이 없습니다');
-    return this.mediaService.uploadRoomProfile(file, roomId, req.user!.sub);
+    return this.mediaService.uploadRoomProfile(
+      file,
+      roomId,
+      (req.user as { sub: string }).sub,
+    );
   }
 
   @Post('banners')
@@ -131,7 +161,11 @@ export class MediaController {
     schema: {
       type: 'object',
       properties: {
-        file: { type: 'string', format: 'binary', description: '배너 이미지 (jpg, png 등)' },
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: '배너 이미지 (jpg, png 등)',
+        },
         linkUrl: { type: 'string', description: '배너 클릭 시 이동할 URL' },
       },
       required: ['file', 'linkUrl'],

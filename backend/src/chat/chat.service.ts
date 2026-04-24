@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { EditMessageDto } from './dto/edit-message.dto';
@@ -95,7 +99,9 @@ export class ChatService {
         where: { roomId_userId: { roomId: message.roomId, userId } },
       });
       if (!member || member.role !== 'OWNER') {
-        throw new ForbiddenException('본인 메시지 또는 방장만 삭제할 수 있습니다.');
+        throw new ForbiddenException(
+          '본인 메시지 또는 방장만 삭제할 수 있습니다.',
+        );
       }
     }
 
@@ -133,7 +139,12 @@ export class ChatService {
    * 채팅방의 메시지 목록을 페이지네이션으로 조회한다.
    * cursor 기반으로 동작해 무한 스크롤(과거 메시지 불러오기)에 적합하다.
    */
-  async getMessages(userId: string, roomId: string, cursor?: string, take = 50) {
+  async getMessages(
+    userId: string,
+    roomId: string,
+    cursor?: string,
+    take = 50,
+  ) {
     await this.assertActiveMember(userId, roomId);
 
     return this.prisma.message.findMany({

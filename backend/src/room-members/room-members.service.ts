@@ -16,12 +16,18 @@ export class RoomMembersService {
    * GROUP 채팅방에 유저를 초대한다. 요청자가 OWNER여야 한다.
    * 이전에 나간 멤버는 재초대 시 복귀 처리한다.
    */
-  async inviteMember(requesterId: string, roomId: string, dto: InviteMemberDto) {
+  async inviteMember(
+    requesterId: string,
+    roomId: string,
+    dto: InviteMemberDto,
+  ) {
     const { targetUserId } = dto;
 
     await this.assertOwner(requesterId, roomId);
 
-    const targetUser = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+    });
     if (!targetUser) {
       throw new NotFoundException('초대할 유저를 찾을 수 없습니다.');
     }
@@ -34,8 +40,13 @@ export class RoomMembersService {
         _count: { select: { members: { where: { leftAt: null } } } },
       },
     });
-    if (room?.memberLimit !== null && room!._count.members >= room!.memberLimit!) {
-      throw new BadRequestException(`최대 인원(${room!.memberLimit}명)에 도달해 더 이상 초대할 수 없습니다.`);
+    if (
+      room?.memberLimit !== null &&
+      room!._count.members >= room!.memberLimit
+    ) {
+      throw new BadRequestException(
+        `최대 인원(${room!.memberLimit}명)에 도달해 더 이상 초대할 수 없습니다.`,
+      );
     }
 
     const existing = await this.prisma.roomMember.findUnique({
@@ -64,7 +75,11 @@ export class RoomMembersService {
    * - OWNER는 다른 MEMBER를 내보낼 수 있다.
    * - MEMBER는 자기 자신만 내보낼 수 있다 (자진 퇴장).
    */
-  async removeMember(requesterId: string, roomId: string, targetUserId: string) {
+  async removeMember(
+    requesterId: string,
+    roomId: string,
+    targetUserId: string,
+  ) {
     const requesterMember = await this.prisma.roomMember.findUnique({
       where: { roomId_userId: { roomId, userId: requesterId } },
     });
@@ -83,7 +98,9 @@ export class RoomMembersService {
     const isSelf = requesterId === targetUserId;
 
     if (isOwner && isSelf) {
-      throw new BadRequestException('OWNER는 자기 자신을 내보낼 수 없습니다. 먼저 OWNER를 다른 멤버에게 넘겨주세요.');
+      throw new BadRequestException(
+        'OWNER는 자기 자신을 내보낼 수 없습니다. 먼저 OWNER를 다른 멤버에게 넘겨주세요.',
+      );
     }
 
     if (!isOwner && !isSelf) {
@@ -100,13 +117,19 @@ export class RoomMembersService {
    * OWNER 권한을 다른 MEMBER에게 이전한다.
    * 기존 OWNER는 MEMBER로 강등된다.
    */
-  async transferOwner(requesterId: string, roomId: string, dto: TransferOwnerDto) {
+  async transferOwner(
+    requesterId: string,
+    roomId: string,
+    dto: TransferOwnerDto,
+  ) {
     const { targetUserId } = dto;
 
     await this.assertOwner(requesterId, roomId);
 
     if (requesterId === targetUserId) {
-      throw new BadRequestException('자기 자신에게 OWNER를 넘겨줄 수 없습니다.');
+      throw new BadRequestException(
+        '자기 자신에게 OWNER를 넘겨줄 수 없습니다.',
+      );
     }
 
     const targetMember = await this.prisma.roomMember.findUnique({

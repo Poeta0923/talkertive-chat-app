@@ -1,4 +1,9 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import slugify from 'slugify';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -14,7 +19,10 @@ export class RoomsService {
   /**
    * GROUP 모임 채팅방을 생성하고 생성자를 OWNER로 등록한다.
    */
-  async createGroupRoom(userId: string, dto: CreateGroupRoomDto): Promise<Room> {
+  async createGroupRoom(
+    userId: string,
+    dto: CreateGroupRoomDto,
+  ): Promise<Room> {
     // name 기반으로 slug를 생성하되, @unique 충돌 방지를 위해 랜덤 4자리 접미사를 붙인다
     // 한글 등 라틴 문자가 아닌 이름은 slugify 결과가 빈 문자열이 되므로 'room'을 기본값으로 사용한다
     const suffix = randomBytes(2).toString('hex');
@@ -41,7 +49,11 @@ export class RoomsService {
    * GROUP 모임 채팅방 정보를 수정한다.
    * OWNER만 수정할 수 있다.
    */
-  async updateGroupRoom(userId: string, roomId: string, dto: UpdateGroupRoomDto): Promise<Room> {
+  async updateGroupRoom(
+    userId: string,
+    roomId: string,
+    dto: UpdateGroupRoomDto,
+  ): Promise<Room> {
     // 방 존재 여부 및 요청자가 OWNER인지 확인
     const member = await this.prisma.roomMember.findUnique({
       where: { roomId_userId: { roomId, userId } },
@@ -262,7 +274,10 @@ export class RoomsService {
    * 1대1 DIRECT 채팅방을 생성하고 두 유저를 멤버로 등록한다.
    * 이미 두 유저 간 DIRECT 방이 존재하면 기존 방을 반환한다.
    */
-  async createDirectRoom(userId: string, dto: CreateDirectRoomDto): Promise<Room> {
+  async createDirectRoom(
+    userId: string,
+    dto: CreateDirectRoomDto,
+  ): Promise<Room> {
     const { targetUserId } = dto;
 
     // 상대방 유저 존재 여부 확인

@@ -1,5 +1,10 @@
 import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { BannerService } from './banner.service';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -13,7 +18,11 @@ export class BannerController {
 
   @Get()
   @ApiOperation({ summary: '배너 목록 조회' })
-  @ApiOkResponse({ description: '배너 목록', type: BannerEntity, isArray: true })
+  @ApiOkResponse({
+    description: '배너 목록',
+    type: BannerEntity,
+    isArray: true,
+  })
   findAll() {
     return this.bannerService.findAll();
   }

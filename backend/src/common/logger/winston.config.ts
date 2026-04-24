@@ -1,4 +1,7 @@
-import { utilities as nestWinstonUtilities, WinstonModuleOptions } from 'nest-winston';
+import {
+  utilities as nestWinstonUtilities,
+  WinstonModuleOptions,
+} from 'nest-winston';
 import * as winston from 'winston';
 import { RequestContext } from '../request-context';
 

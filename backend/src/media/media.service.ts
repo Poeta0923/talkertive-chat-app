@@ -1,6 +1,14 @@
 /// <reference types="multer" />
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { v4 as uuid } from 'uuid';
 
@@ -26,7 +34,10 @@ export class MediaService {
    * @param key  - S3 오브젝트 키 (경로 포함)
    * @returns CloudFront URL
    */
-  private async upload(file: Express.Multer.File, key: string): Promise<string> {
+  private async upload(
+    file: Express.Multer.File,
+    key: string,
+  ): Promise<string> {
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: process.env.AWS_MEDIA_S3_BUCKET_NAME,
@@ -72,7 +83,10 @@ export class MediaService {
       select: { image: true },
     });
     await this.deleteIfExists(existing?.image ?? null);
-    const url = await this.upload(file, this.buildKey(`users/${userId}/profile`, file.originalname));
+    const url = await this.upload(
+      file,
+      this.buildKey(`users/${userId}/profile`, file.originalname),
+    );
     return this.prisma.user.update({
       where: { id: userId },
       data: { image: url },
@@ -84,14 +98,21 @@ export class MediaService {
    * 모임 커버 이미지 업로드 후 Room.coverImage 업데이트
    * S3 경로: rooms/{roomId}/cover/{uuid}.{ext}
    */
-  async uploadRoomCover(file: Express.Multer.File, roomId: string, userId: string) {
+  async uploadRoomCover(
+    file: Express.Multer.File,
+    roomId: string,
+    userId: string,
+  ) {
     await this.assertRoomOwner(roomId, userId);
     const existing = await this.prisma.room.findUnique({
       where: { id: roomId },
       select: { coverImage: true },
     });
     await this.deleteIfExists(existing?.coverImage ?? null);
-    const url = await this.upload(file, this.buildKey(`rooms/${roomId}/cover`, file.originalname));
+    const url = await this.upload(
+      file,
+      this.buildKey(`rooms/${roomId}/cover`, file.originalname),
+    );
     return this.prisma.room.update({
       where: { id: roomId },
       data: { coverImage: url },
@@ -102,14 +123,21 @@ export class MediaService {
    * 모임 프로필 이미지 업로드 후 Room.profileImage 업데이트
    * S3 경로: rooms/{roomId}/profile/{uuid}.{ext}
    */
-  async uploadRoomProfile(file: Express.Multer.File, roomId: string, userId: string) {
+  async uploadRoomProfile(
+    file: Express.Multer.File,
+    roomId: string,
+    userId: string,
+  ) {
     await this.assertRoomOwner(roomId, userId);
     const existing = await this.prisma.room.findUnique({
       where: { id: roomId },
       select: { profileImage: true },
     });
     await this.deleteIfExists(existing?.profileImage ?? null);
-    const url = await this.upload(file, this.buildKey(`rooms/${roomId}/profile`, file.originalname));
+    const url = await this.upload(
+      file,
+      this.buildKey(`rooms/${roomId}/profile`, file.originalname),
+    );
     return this.prisma.room.update({
       where: { id: roomId },
       data: { profileImage: url },
@@ -136,7 +164,10 @@ export class MediaService {
    * S3 경로: banners/{uuid}.{ext}
    */
   async uploadBanner(file: Express.Multer.File, linkUrl: string) {
-    const url = await this.upload(file, this.buildKey('banners', file.originalname));
+    const url = await this.upload(
+      file,
+      this.buildKey('banners', file.originalname),
+    );
     return this.prisma.banner.create({
       data: { imageUrl: url, linkUrl },
     });
@@ -147,7 +178,10 @@ export class MediaService {
    * S3 경로: messages/{roomId}/{uuid}.{ext}
    */
   async uploadMessageAttachment(file: Express.Multer.File, roomId: string) {
-    const url = await this.upload(file, this.buildKey(`messages/${roomId}`, file.originalname));
+    const url = await this.upload(
+      file,
+      this.buildKey(`messages/${roomId}`, file.originalname),
+    );
     return { url };
   }
 }

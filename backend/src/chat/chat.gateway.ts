@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import {
   ConnectedSocket,
   MessageBody,
@@ -17,6 +19,9 @@ import { EditMessageDto } from './dto/edit-message.dto';
 import { DeleteMessageDto } from './dto/delete-message.dto';
 import { ReadMessageDto } from './dto/read-message.dto';
 
+// socket.io의 Socket.data는 any로 선언되어 있어 교차 타입으로 재정의
+type AuthenticatedSocket = Socket & { data: { user: { sub: string } } };
+
 /**
  * ChatGateway — 실시간 채팅을 처리하는 WebSocket 게이트웨이.
  *
@@ -32,7 +37,8 @@ import { ReadMessageDto } from './dto/read-message.dto';
 @WebSocketGateway({
   namespace: '/chat',
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : true,
+    origin:
+      process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : true,
     credentials: true,
   },
 })
@@ -46,7 +52,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * 이 인스턴스로 특정 룸이나 모든 클라이언트에게 이벤트를 emit할 수 있다.
    */
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private chatService: ChatService,
@@ -61,7 +67,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * 연결 직후에는 WsJwtGuard가 아직 동작하지 않으므로,
    * handleConnection에서 직접 토큰을 검증해야 한다.
    */
-  async handleConnection(client: Socket) {
+  async handleConnection(client: AuthenticatedSocket) {
     try {
       const token =
         (client.handshake.auth?.token as string) ||
@@ -69,7 +75,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (!token) throw new Error('토큰 없음');
 
-      const payload = this.jwtService.verify(token, {
+      const payload = this.jwtService.verify<{ sub: string }>(token, {
         secret: process.env.AUTH_SECRET,
       });
 
@@ -81,7 +87,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // 자신이 속한 방의 새 메시지 알림(room-list-updated)을 받을 수 있다.
       await client.join(`user:${payload.sub}`);
 
-      console.log(`[Chat] 연결됨: userId=${payload.sub}, socketId=${client.id}`);
+      console.log(
+        `[Chat] 연결됨: userId=${payload.sub}, socketId=${client.id}`,
+      );
     } catch {
       // 인증 실패 시 연결을 즉시 끊는다
       console.log(`[Chat] 인증 실패로 연결 해제: socketId=${client.id}`);
@@ -94,8 +102,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * socket.io가 자동으로 해당 소켓이 속한 모든 룸에서 제거하므로
    * 별도로 룸에서 leave를 호출할 필요가 없다.
    */
-  handleDisconnect(client: Socket) {
-    console.log(`[Chat] 연결 해제: userId=${client.data.user?.sub}, socketId=${client.id}`);
+  handleDisconnect(client: AuthenticatedSocket) {
+    console.log(
+      `[Chat] 연결 해제: userId=${client.data.user?.sub}, socketId=${client.id}`,
+    );
   }
 
   /**
@@ -110,7 +120,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   @SubscribeMessage('join-room')
   async handleJoinRoom(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { roomId: string },
   ) {
     const userId = client.data.user.sub as string;
@@ -135,10 +145,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   @SubscribeMessage('leave-room')
   handleLeaveRoom(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { roomId: string },
   ) {
-    client.leave(`room:${data.roomId}`);
+    void client.leave(`room:${data.roomId}`);
     return { event: 'room-left', data: {} };
   }
 
@@ -150,7 +160,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   @SubscribeMessage('send-message')
   async handleSendMessage(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: SendMessageDto,
   ) {
     const userId = client.data.user.sub as string;
@@ -176,7 +186,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
     };
     for (const memberId of memberIds) {
-      this.server.to(`user:${memberId}`).emit('room-list-updated', roomListPayload);
+      this.server
+        .to(`user:${memberId}`)
+        .emit('room-list-updated', roomListPayload);
     }
 
     return { event: 'message-sent', data: { message } };
@@ -190,7 +202,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   @SubscribeMessage('edit-message')
   async handleEditMessage(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: EditMessageDto,
   ) {
     const userId = client.data.user.sub as string;
@@ -211,7 +223,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   @SubscribeMessage('delete-message')
   async handleDeleteMessage(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: DeleteMessageDto,
   ) {
     const userId = client.data.user.sub as string;
@@ -236,7 +248,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   @SubscribeMessage('read-message')
   async handleReadMessage(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: ReadMessageDto,
   ) {
     const userId = client.data.user.sub as string;
@@ -262,7 +274,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    */
   @SubscribeMessage('typing')
   handleTyping(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { roomId: string; isTyping: boolean },
   ) {
     const userId = client.data.user.sub as string;

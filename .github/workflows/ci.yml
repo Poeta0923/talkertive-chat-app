@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ────────────────────────────────────────────
+  # 백엔드 CI: lint → 타입 체크 → 테스트 → 빌드
+  # ────────────────────────────────────────────
+  backend:
+    name: Backend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: pnpm 설치
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: pnpm 캐시 설정
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: backend-${{ runner.os }}-${{ hashFiles('backend/pnpm-lock.yaml') }}
+          restore-keys: backend-${{ runner.os }}-
+
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma 클라이언트 생성
+        run: npx prisma generate
+        env:
+          # prisma generate는 DB 연결이 필요 없지만 schema 파싱 시 env() 검증을 위해 더미값 사용
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: 타입 체크
+        run: npx tsc --noEmit
+
+      - name: 단위 테스트
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          AUTH_SECRET: ci-secret-for-test
+
+      - name: 빌드
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+  # ────────────────────────────────────────────
+  # 프론트엔드 CI: 타입 체크 → 빌드
+  # ────────────────────────────────────────────
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: pnpm 설치
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: pnpm 캐시 설정
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: frontend-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: frontend-${{ runner.os }}-
+
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma 클라이언트 생성
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+      - name: 타입 체크
+        run: npx tsc --noEmit
+
+      - name: 빌드
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          AUTH_SECRET: ci-secret-for-build
+          AUTH_GOOGLE_ID: ci-google-id
+          AUTH_GOOGLE_SECRET: ci-google-secret
+          API_URL: http://localhost:8000

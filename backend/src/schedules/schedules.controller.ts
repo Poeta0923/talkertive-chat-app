@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -25,7 +35,11 @@ export class SchedulesController {
 
   @Get()
   @ApiOperation({ summary: '내가 소속된 GROUP 방의 모든 일정 조회' })
-  @ApiOkResponse({ description: '일정 목록 (time 오름차순)', type: RoomScheduleEntity, isArray: true })
+  @ApiOkResponse({
+    description: '일정 목록 (time 오름차순)',
+    type: RoomScheduleEntity,
+    isArray: true,
+  })
   findMySchedules(@Req() req: Request) {
     const userId = (req.user as { sub: string }).sub;
     return this.schedulesService.findMySchedules(userId);
@@ -34,7 +48,11 @@ export class SchedulesController {
   @Get(':roomId')
   @ApiOperation({ summary: '특정 GROUP 방의 일정 목록 조회' })
   @ApiParam({ name: 'roomId', description: '대상 GROUP 방 ID' })
-  @ApiOkResponse({ description: '일정 목록 (time 오름차순)', type: RoomScheduleEntity, isArray: true })
+  @ApiOkResponse({
+    description: '일정 목록 (time 오름차순)',
+    type: RoomScheduleEntity,
+    isArray: true,
+  })
   findRoomSchedules(@Param('roomId') roomId: string) {
     return this.schedulesService.findRoomSchedules(roomId);
   }
@@ -64,7 +82,12 @@ export class SchedulesController {
     @Body() dto: UpdateScheduleDto,
   ) {
     const userId = (req.user as { sub: string }).sub;
-    return this.schedulesService.updateSchedule(userId, roomId, scheduleId, dto);
+    return this.schedulesService.updateSchedule(
+      userId,
+      roomId,
+      scheduleId,
+      dto,
+    );
   }
 
   @Delete(':roomId/:scheduleId')
@@ -84,7 +107,10 @@ export class SchedulesController {
   @Post(':roomId/ai')
   @ApiOperation({ summary: 'AI로 일정 추가/변경/취소 (OWNER 전용)' })
   @ApiParam({ name: 'roomId', description: '대상 GROUP 방 ID' })
-  @ApiOkResponse({ description: 'AI가 처리한 결과 일정', type: RoomScheduleEntity })
+  @ApiOkResponse({
+    description: 'AI가 처리한 결과 일정',
+    type: RoomScheduleEntity,
+  })
   processAiSchedule(
     @Req() req: Request,
     @Param('roomId') roomId: string,

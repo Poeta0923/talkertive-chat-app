@@ -1,5 +1,18 @@
-import { Body, Controller, Get, Param, Patch, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
@@ -15,7 +28,10 @@ export class UsersController {
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '내 정보 조회' })
-  @ApiOkResponse({ description: '내 유저 정보 (hashedPassword 제외)', type: UserEntity })
+  @ApiOkResponse({
+    description: '내 유저 정보 (hashedPassword 제외)',
+    type: UserEntity,
+  })
   getMe(@Req() req: Request) {
     const userId = (req.user as { sub: string }).sub;
     return this.usersService.getMe(userId);
@@ -25,7 +41,10 @@ export class UsersController {
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '유저 정보 수정 (본인만 가능)' })
-  @ApiOkResponse({ description: '수정된 유저 정보 (hashedPassword 제외)', type: UserEntity })
+  @ApiOkResponse({
+    description: '수정된 유저 정보 (hashedPassword 제외)',
+    type: UserEntity,
+  })
   updateMe(
     @Req() req: Request,
     @Param('userId') userId: string,
