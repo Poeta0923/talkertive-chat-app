@@ -40,4 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/generated
+# openapi-ts 자동생성 파일은 CI 빌드 의존성이므로 커밋 대상에 포함
+# /generated
