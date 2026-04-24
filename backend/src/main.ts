@@ -2,9 +2,18 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // XSS, 클릭재킹, MIME 스니핑 등 브라우저 수준 공격을 차단하는 보안 헤더 일괄 적용
+  // Swagger UI가 inline 스크립트를 사용하므로 개발 환경에서는 CSP를 비활성화
+  app.use(
+    helmet({
+      contentSecurityPolicy: process.env.NODE_ENV === 'production',
+    }),
+  );
 
   // transform: true — 요청 데이터를 DTO 타입에 맞게 자동 변환 (string → number 등)
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
