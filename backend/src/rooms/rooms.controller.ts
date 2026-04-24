@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { RoomsService } from './rooms.service';
 import { CreateGroupRoomDto } from './dto/create-group-room.dto';
 import { CreateDirectRoomDto } from './dto/create-direct-room.dto';
@@ -14,7 +15,9 @@ import type { Request } from 'express';
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
+  // 방 생성은 스팸 방지를 위해 전역보다 엄격하게 제한 (60초에 5회)
   @Post('group')
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'GROUP 모임 채팅방 생성' })
@@ -24,7 +27,9 @@ export class RoomsController {
     return this.roomsService.createGroupRoom(userId, dto);
   }
 
+  // 방 생성은 스팸 방지를 위해 전역보다 엄격하게 제한 (60초에 5회)
   @Post('direct')
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '1대1 DIRECT 채팅방 생성' })

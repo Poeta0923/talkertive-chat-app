@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   applyDecorators,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
@@ -78,6 +79,8 @@ function ApiFileUpload(summary: string, description: string) {
   );
 }
 
+// S3 업로드는 비용이 발생하므로 전역보다 엄격하게 제한 (60초에 3회)
+@Throttle({ default: { ttl: 60000, limit: 3 } })
 @ApiTags('media')
 @Controller('media')
 export class MediaController {
