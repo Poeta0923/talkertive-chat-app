@@ -31,3 +31,16 @@ export async function uploadRoomCover(roomId: string, formData: FormData) {
   const data = await res.json() as { coverImage: string };
   return data.coverImage;
 }
+
+export async function uploadRoomProfile(roomId: string, formData: FormData) {
+  const token = await getSessionToken();
+  const res = await fetch(`${API_URL}/media/rooms/${roomId}/profile`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!res.ok) throw new Error('이미지 업로드에 실패했습니다.');
+  const data = await res.json() as { profileImage: string };
+  return data.profileImage;
+}
