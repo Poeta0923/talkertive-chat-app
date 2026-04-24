@@ -7,7 +7,10 @@ export class UpdateScheduleDto {
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ description: '일정 시각', example: '2026-05-01T14:00:00.000Z' })
+  @ApiPropertyOptional({
+    description: '일정 시각',
+    example: '2026-05-01T14:00:00.000Z',
+  })
   @IsOptional()
   @IsDateString()
   time?: string;

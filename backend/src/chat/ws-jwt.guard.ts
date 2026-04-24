@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
@@ -31,13 +31,13 @@ export class WsJwtGuard implements CanActivate {
 
     try {
       // NextAuth와 동일한 AUTH_SECRET으로 서명 검증
-      const payload = this.jwtService.verify(token, {
+      const payload = this.jwtService.verify<{ sub: string }>(token, {
         secret: process.env.AUTH_SECRET,
       });
 
       // 검증된 payload를 소켓 데이터에 저장해 Gateway에서 꺼내 쓸 수 있게 한다
-      // socket.data는 socket.io가 소켓 인스턴스마다 제공하는 커스텀 저장 공간이다
-      client.data.user = payload;
+      // socket.data는 socket.io가 any로 정의되어 있어 타입 단언으로 접근
+      (client.data as { user: { sub: string } }).user = payload;
       return true;
     } catch {
       throw new WsException('유효하지 않은 토큰입니다.');

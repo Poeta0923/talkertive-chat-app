@@ -14,7 +14,12 @@ import { RoomSchedule } from 'generated/prisma';
 
 // Claude가 반환하는 JSON 구조 타입
 type ClaudeScheduleAdd = { type: '일정 추가'; name: string; date: string };
-type ClaudeScheduleUpdate = { type: '일정 변경'; name: string; date: string; changedDate: string };
+type ClaudeScheduleUpdate = {
+  type: '일정 변경';
+  name: string;
+  date: string;
+  changedDate: string;
+};
 type ClaudeScheduleCancel = { type: '일정 취소'; name: string; date: string };
 type ClaudeScheduleError = { error: 'no_match' };
 type ClaudeScheduleResult =
@@ -30,7 +35,15 @@ function parseClaudeDate(dateStr: string): Date {
 
 // KST 기준 요일 이름 반환
 function getWeekdayName(date: Date): string {
-  const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+  const days = [
+    '일요일',
+    '월요일',
+    '화요일',
+    '수요일',
+    '목요일',
+    '금요일',
+    '토요일',
+  ];
   return days[date.getDay()];
 }
 
@@ -53,7 +66,9 @@ export class SchedulesService {
   /**
    * 사용자가 활성 멤버로 참여 중인 모든 GROUP 방의 일정을 반환한다.
    */
-  async findMySchedules(userId: string): Promise<(RoomSchedule & { roomName: string | null })[]> {
+  async findMySchedules(
+    userId: string,
+  ): Promise<(RoomSchedule & { roomName: string | null })[]> {
     const schedules = await this.prisma.roomSchedule.findMany({
       where: {
         room: {
@@ -96,7 +111,11 @@ export class SchedulesService {
   /**
    * 특정 GROUP 방에 일정을 추가한다. OWNER만 실행할 수 있다.
    */
-  async createSchedule(userId: string, roomId: string, dto: CreateScheduleDto): Promise<RoomSchedule> {
+  async createSchedule(
+    userId: string,
+    roomId: string,
+    dto: CreateScheduleDto,
+  ): Promise<RoomSchedule> {
     await this.assertOwner(userId, roomId);
 
     return this.prisma.roomSchedule.create({
@@ -132,7 +151,11 @@ export class SchedulesService {
   /**
    * 일정을 삭제한다. 해당 방의 OWNER만 실행할 수 있다.
    */
-  async deleteSchedule(userId: string, roomId: string, scheduleId: string): Promise<void> {
+  async deleteSchedule(
+    userId: string,
+    roomId: string,
+    scheduleId: string,
+  ): Promise<void> {
     await this.assertOwner(userId, roomId);
     await this.assertScheduleExists(scheduleId, roomId);
 
@@ -155,7 +178,10 @@ export class SchedulesService {
   }
 
   // 일정이 해당 방에 속하는지 확인하는 공통 헬퍼
-  private async assertScheduleExists(scheduleId: string, roomId: string): Promise<void> {
+  private async assertScheduleExists(
+    scheduleId: string,
+    roomId: string,
+  ): Promise<void> {
     const schedule = await this.prisma.roomSchedule.findUnique({
       where: { id: scheduleId },
     });
@@ -193,7 +219,15 @@ export class SchedulesService {
     const weekday = getWeekdayName(today);
 
     // AI가 요일→날짜 변환을 직접 계산하지 않도록 앞으로 14일의 매핑을 명시적으로 제공한다
-    const weekdayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+    const weekdayNames = [
+      '일요일',
+      '월요일',
+      '화요일',
+      '수요일',
+      '목요일',
+      '금요일',
+      '토요일',
+    ];
     const upcomingDates = Array.from({ length: 14 }, (_, i) => {
       const d = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
       return `${weekdayNames[d.getDay()]}(${i === 0 ? '오늘' : `+${i}일`}): ${formatDate(d).split(' ')[0]}`;
@@ -260,7 +294,10 @@ Return format by action_type:
       .join('');
 
     // 마크다운 코드블록(```json ... ``` 또는 ``` ... ```)을 제거한다
-    const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    const cleaned = rawText
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/, '')
+      .trim();
 
     let parsed: ClaudeScheduleResult;
     try {
@@ -273,7 +310,11 @@ Return format by action_type:
       throw new NotFoundException('일치하는 일정을 찾을 수 없습니다.');
     }
 
-    return this.applyScheduleAction(roomId, parsed as Exclude<ClaudeScheduleResult, ClaudeScheduleError>, existingSchedules);
+    return this.applyScheduleAction(
+      roomId,
+      parsed as Exclude<ClaudeScheduleResult, ClaudeScheduleError>,
+      existingSchedules,
+    );
   }
 
   private async applyScheduleAction(
@@ -293,7 +334,11 @@ Return format by action_type:
 
     if (result.type === '일정 변경') {
       // name + date로 기존 일정 매칭
-      const target = this.findMatchingSchedule(existingSchedules, result.name, result.date);
+      const target = this.findMatchingSchedule(
+        existingSchedules,
+        result.name,
+        result.date,
+      );
 
       if (!target) {
         throw new NotFoundException('변경할 일정을 찾을 수 없습니다.');
@@ -309,7 +354,11 @@ Return format by action_type:
     }
 
     if (result.type === '일정 취소') {
-      const target = this.findMatchingSchedule(existingSchedules, result.name, result.date);
+      const target = this.findMatchingSchedule(
+        existingSchedules,
+        result.name,
+        result.date,
+      );
 
       if (!target) {
         throw new NotFoundException('취소할 일정을 찾을 수 없습니다.');

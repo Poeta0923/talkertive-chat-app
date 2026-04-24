@@ -33,7 +33,8 @@ async function bootstrap() {
 
   // 개발 환경에서 프론트엔드(3000)와 Swagger(8000)의 cross-origin 요청 허용
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : true,
+    origin:
+      process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : true,
     credentials: true,
   });
 
@@ -63,4 +64,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 8000);
 }
-bootstrap();
+void bootstrap();

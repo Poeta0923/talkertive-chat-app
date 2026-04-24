@@ -16,9 +16,10 @@ export class AppController {
   @Get('user-test')
   @UseGuards(AccessTokenGuard)
   @ApiBearerAuth('access-token')
-  @ApiOkResponse({description: '유저 테스트', type: String})
-  testUser(@Req() req: Request){
-    console.log(req.user);
-    return `유저 이메일: ${req.user?.email}`
+  @ApiOkResponse({ description: '유저 테스트', type: String })
+  testUser(@Req() req: Request) {
+    const user = req.user as { email?: string } | undefined;
+    console.log(user);
+    return `유저 이메일: ${user?.email}`;
   }
 }

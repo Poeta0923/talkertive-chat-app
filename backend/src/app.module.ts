@@ -54,7 +54,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(
-        RequestIdMiddleware,   // 1순위: UUID 생성 → AsyncLocalStorage 저장
+        RequestIdMiddleware, // 1순위: UUID 생성 → AsyncLocalStorage 저장
         HttpLoggingMiddleware, // 2순위: requestId가 이미 컨텍스트에 있으므로 로그에 자동 포함
       )
       .forRoutes('*'); // 모든 라우트에 적용
