@@ -1,3 +1,5 @@
+// Sentry는 반드시 가장 먼저 초기화되어야 모든 모듈을 계측할 수 있음
+import './instrument';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
