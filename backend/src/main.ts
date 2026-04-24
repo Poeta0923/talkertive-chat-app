@@ -3,9 +3,20 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // WinstonModule이 준비되기 전 발생하는 로그를 버퍼에 쌓았다가 useLogger 이후 일괄 출력
+    bufferLogs: true,
+  });
+
+  // NestJS 내장 Logger를 Winston으로 교체
+  // 이후 new Logger('Context')로 찍히는 모든 로그가 Winston을 통해 출력됨
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+
+  // Graceful Shutdown — SIGTERM 수신 시 진행 중인 요청을 완료하고 종료 (Docker·k8s 필수 패턴)
+  app.enableShutdownHooks();
 
   // XSS, 클릭재킹, MIME 스니핑 등 브라우저 수준 공격을 차단하는 보안 헤더 일괄 적용
   // Swagger UI가 inline 스크립트를 사용하므로 개발 환경에서는 CSP를 비활성화
