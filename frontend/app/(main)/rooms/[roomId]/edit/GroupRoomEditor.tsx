@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { RoomCategory, UpdateGroupRoomDto } from '@/generated/openapi-client';
-import { updateGroupRoom, uploadRoomCover } from './actions';
+import { updateGroupRoom, uploadRoomCover, uploadRoomProfile } from './actions';
 
 const CATEGORY_LABEL: Record<RoomCategory, string> = {
   STUDY: '스터디',
@@ -29,15 +29,18 @@ interface Props {
     address: string | null;
     date: string | null;
     coverImage: string | null;
+    profileImage: string | null;
   };
 }
 
 export default function GroupRoomEditor({ roomId, initialData }: Props) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const profileFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [coverImage, setCoverImage] = useState(initialData.coverImage ?? null);
+  const [profileImage, setProfileImage] = useState(initialData.profileImage ?? null);
   const [name, setName] = useState(initialData.name ?? '');
   const [description, setDescription] = useState(initialData.description ?? '');
   const [shortDescription, setShortDescription] = useState(initialData.shortDescription ?? '');
@@ -52,6 +55,12 @@ export default function GroupRoomEditor({ roomId, initialData }: Props) {
     fileInputRef.current?.click();
   };
 
+  const handleProfileImageClick = (e: React.MouseEvent) => {
+    // 커버 클릭 이벤트가 위로 전파되지 않도록 막는다
+    e.stopPropagation();
+    profileFileInputRef.current?.click();
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -63,6 +72,25 @@ export default function GroupRoomEditor({ roomId, initialData }: Props) {
     try {
       const url = await uploadRoomCover(roomId, formData);
       setCoverImage(url);
+    } catch {
+      alert('이미지 업로드에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleProfileFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setIsLoading(true);
+    try {
+      const url = await uploadRoomProfile(roomId, formData);
+      setProfileImage(url);
     } catch {
       alert('이미지 업로드에 실패했습니다.');
     } finally {
@@ -98,25 +126,48 @@ export default function GroupRoomEditor({ roomId, initialData }: Props) {
       <h1 className="text-2xl font-bold mb-8">모임 정보 수정</h1>
 
       <div className="flex flex-col gap-6">
-        {/* 커버 이미지 */}
+        {/* 커버 이미지 + 프로필 이미지 */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium">커버 이미지</label>
-          <div
-            onClick={handleCoverImageClick}
-            className="relative w-full aspect-5/1 bg-muted rounded-lg overflow-hidden cursor-pointer group"
-          >
-            {coverImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverImage} alt="커버 이미지" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
-                이미지 없음
+          {/* overflow-hidden을 커버에만 적용하고, 바깥 wrapper를 relative로 두어 프로필 원이 잘리지 않게 한다 */}
+          <div className="relative pb-5">
+            <div
+              onClick={handleCoverImageClick}
+              className="relative w-full aspect-5/1 bg-muted rounded-lg overflow-hidden cursor-pointer group"
+            >
+              {coverImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={coverImage} alt="커버 이미지" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                  이미지 없음
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  수정하기
+                </span>
               </div>
-            )}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-              <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                수정하기
-              </span>
+            </div>
+
+            {/* 프로필 이미지 — 커버 좌하단에 원형으로 오버레이 */}
+            <div
+              onClick={handleProfileImageClick}
+              className="absolute bottom-0 left-4 w-16 h-16 rounded-full overflow-hidden ring-2 ring-background bg-muted cursor-pointer group/profile flex items-center justify-center z-10"
+            >
+              {profileImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profileImage} alt="프로필 이미지" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-lg font-medium text-muted-foreground">
+                  {initialData.name?.[0] ?? '?'}
+                </span>
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover/profile:bg-black/40 transition-colors flex items-center justify-center rounded-full">
+                <span className="text-white text-[10px] font-medium opacity-0 group-hover/profile:opacity-100 transition-opacity text-center leading-tight">
+                  수정
+                </span>
+              </div>
             </div>
           </div>
           <input
@@ -125,6 +176,13 @@ export default function GroupRoomEditor({ roomId, initialData }: Props) {
             accept="image/*"
             className="hidden"
             onChange={handleFileChange}
+          />
+          <input
+            ref={profileFileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleProfileFileChange}
           />
         </div>
 

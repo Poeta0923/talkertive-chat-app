@@ -31,7 +31,7 @@ export default async function EditRoomPage({ params }: EditRoomPageProps) {
     <GroupRoomEditor
       roomId={roomId}
       initialData={{
-        name: room.name,
+        name: room.name ?? null,
         description: room.description ?? null,
         shortDescription: room.shortDescription ?? null,
         memberLimit: room.memberLimit ?? null,
@@ -39,6 +39,7 @@ export default async function EditRoomPage({ params }: EditRoomPageProps) {
         address: room.address ?? null,
         date: room.date ?? null,
         coverImage: room.coverImage ?? null,
+        profileImage: room.profileImage ?? null,
       }}
     />
   );
