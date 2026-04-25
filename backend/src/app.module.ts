@@ -1,8 +1,10 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { CacheModule } from '@nestjs/cache-manager';
+import { createKeyv } from '@keyv/redis';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { WinstonModule } from 'nest-winston';
@@ -30,6 +32,15 @@ import { HttpLoggingMiddleware } from './common/middleware/http-logging.middlewa
     WinstonModule.forRoot(createWinstonOptions('Talkertive')),
     // 전역 기본 제한: 10초 윈도우 내 20회 초과 시 429 반환
     ThrottlerModule.forRoot([{ ttl: 10000, limit: 20 }]),
+    // isGlobal: true — CACHE_MANAGER 토큰을 모든 모듈에서 별도 import 없이 주입 가능
+    CacheModule.registerAsync({
+      isGlobal: true,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        stores: [createKeyv(config.get<string>('REDIS_URL'))],
+        ttl: 60_000, // 기본 TTL 60초 (ms), 개별 set() 호출에서 override 가능
+      }),
+    }),
     AuthModule,
     PrismaModule,
     RoomsModule,

@@ -1,9 +1,12 @@
 import {
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { randomBytes } from 'crypto';
 import slugify from 'slugify';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -12,9 +15,30 @@ import { CreateDirectRoomDto } from './dto/create-direct-room.dto';
 import { UpdateGroupRoomDto } from './dto/update-group-room.dto';
 import { Prisma, Room, RoomCategory, RoomType } from 'generated/prisma';
 
+// ─── 캐시 키 헬퍼 ───────────────────────────────────────────────────────────
+const roomDetailKey = (roomId: string) => `rooms:group:${roomId}`;
+
+function roomListKey(params: {
+  skip?: number;
+  take?: number;
+  search?: string;
+  category?: RoomCategory;
+}): string {
+  // undefined 값은 빈 문자열로 정규화해 키를 결정론적으로 만든다
+  const { skip = '', take = '', search = '', category = '' } = params;
+  return `rooms:group:list:${skip}:${take}:${search}:${category}`;
+}
+
+// ─── TTL 상수 (ms) ───────────────────────────────────────────────────────────
+const ROOM_LIST_TTL_MS = 60_000; // 1분 — TTL 만료만으로 충분
+const ROOM_DETAIL_TTL_MS = 120_000; // 2분 — 수정/삭제 시 명시적 무효화
+
 @Injectable()
 export class RoomsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
+  ) {}
 
   /**
    * GROUP 모임 채팅방을 생성하고 생성자를 OWNER로 등록한다.
@@ -48,6 +72,7 @@ export class RoomsService {
   /**
    * GROUP 모임 채팅방 정보를 수정한다.
    * OWNER만 수정할 수 있다.
+   * 수정 성공 후 해당 방의 상세 캐시를 무효화한다.
    */
   async updateGroupRoom(
     userId: string,
@@ -67,19 +92,27 @@ export class RoomsService {
       throw new ForbiddenException('방장만 채팅방 정보를 수정할 수 있습니다.');
     }
 
-    return this.prisma.room.update({
+    const updated = await this.prisma.room.update({
       where: { id: roomId },
       data: {
         ...dto,
         date: dto.date ? new Date(dto.date) : undefined,
       },
     });
+
+    // 상세 캐시 무효화 — 리스트는 TTL 만료로 처리
+    await this.cache.del(roomDetailKey(roomId));
+    return updated;
   }
 
   /**
    * GROUP 모임 채팅방 단건 조회. OWNER 유저 정보를 함께 반환한다.
    */
   async findOneGroupRoom(roomId: string) {
+    const cacheKey = roomDetailKey(roomId);
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
     const room = await this.prisma.room.findUnique({
       where: { id: roomId, type: RoomType.GROUP },
       include: {
@@ -94,12 +127,14 @@ export class RoomsService {
       throw new NotFoundException('채팅방을 찾을 수 없습니다.');
     }
 
+    await this.cache.set(cacheKey, room, ROOM_DETAIL_TTL_MS);
     return room;
   }
 
   /**
    * GROUP 모임 채팅방 목록 조회.
    * date가 현재 시각 이후인 방만 조회하며, 가장 가까운 날짜 순으로 정렬한다.
+   * cursor는 고유값이라 캐시 히트율이 낮으므로 캐시 키에서 제외한다.
    */
   async findAllGroupRooms(params: {
     skip?: number;
@@ -111,8 +146,12 @@ export class RoomsService {
     category?: RoomCategory;
   }) {
     const { skip, take, cursor, where, orderBy, search, category } = params;
+    const cacheKey = roomListKey({ skip, take, search, category });
 
-    return this.prisma.room.findMany({
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.prisma.room.findMany({
       skip,
       take,
       cursor,
@@ -128,12 +167,16 @@ export class RoomsService {
         _count: { select: { members: true, likes: true } },
       },
     });
+
+    await this.cache.set(cacheKey, result, ROOM_LIST_TTL_MS);
+    return result;
   }
 
   /**
    * 내가 활성 멤버로 참여 중인 모든 채팅방(DIRECT + GROUP) 목록을 반환한다.
    * 각 방마다 마지막 메시지와 안 읽은 메시지 수를 포함한다.
    * 마지막 메시지 기준 최신순으로 정렬하며, 메시지가 없는 방은 맨 뒤로 밀린다.
+   * unreadCount 등 실시간 데이터가 포함되므로 캐시하지 않는다.
    */
   async findMyRooms(userId: string) {
     const rooms = await this.prisma.room.findMany({
@@ -162,7 +205,9 @@ export class RoomsService {
             userId: true,
             role: true,
             lastReadAt: true,
-            user: { select: { id: true, name: true, image: true, description: true } },
+            user: {
+              select: { id: true, name: true, image: true, description: true },
+            },
           },
         },
         _count: {
@@ -238,6 +283,7 @@ export class RoomsService {
 
   /**
    * GROUP 모임 채팅방을 삭제한다. OWNER만 삭제할 수 있다.
+   * 삭제 성공 후 해당 방의 상세 캐시를 무효화한다.
    */
   async deleteGroupRoom(userId: string, roomId: string): Promise<void> {
     const member = await this.prisma.roomMember.findUnique({
@@ -253,6 +299,8 @@ export class RoomsService {
     }
 
     await this.prisma.room.delete({ where: { id: roomId } });
+    // 상세 캐시 무효화 — 리스트는 TTL 만료로 처리 (방 삭제는 드문 이벤트)
+    await this.cache.del(roomDetailKey(roomId));
   }
 
   /**
