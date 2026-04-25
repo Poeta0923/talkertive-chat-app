@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
 import RoomCard from '@/components/RoomCard';
+import CreateRoomCard from '@/components/CreateRoomCard';
 import { getMyRooms } from '@/lib/my-rooms';
 import { redirect } from 'next/navigation';
 
@@ -16,16 +17,11 @@ export default async function OwnedRoomsPage() {
   );
 
   return (
-    <div>
-      {ownedRooms.length === 0 ? (
-        <p className="text-muted-foreground">주관중인 모임이 없습니다.</p>
-      ) : (
-        <div className="grid grid-cols-4 gap-6">
-          {ownedRooms.map((room) => (
-            <RoomCard key={room.id} room={room} />
-          ))}
-        </div>
-      )}
+    <div className="grid grid-cols-4 gap-6">
+      <CreateRoomCard />
+      {ownedRooms.map((room) => (
+        <RoomCard key={room.id} room={room} />
+      ))}
     </div>
   );
 }
