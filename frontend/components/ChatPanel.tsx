@@ -2,14 +2,16 @@
 
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import Link from 'next/link';
-import { ChevronRight, ExternalLink, CalendarDays, Send, Pencil, Trash2, Check, X, Paperclip, Bot, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ChevronRight, Send, Pencil, Trash2, Check, X, Paperclip, Plus, Settings } from 'lucide-react';
 import type { MyRoom } from '@/hooks/useMyRooms';
 import { formatTime } from '@/lib/utils';
 import { getAuthToken } from '@/lib/auth-client';
 import RoomScheduleCalendar from './RoomScheduleCalendar';
 import AiSchedulePanel from './AiSchedulePanel';
 import InviteToGroupPanel from './InviteToGroupPanel';
+import MemberListPanel from './MemberListPanel';
+import TransferOwnerPanel from './TransferOwnerPanel';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -38,9 +40,11 @@ interface ChatPanelProps {
   room: MyRoom;
   currentUserId: string;
   onBack: () => void;
+  onNavigateToRoom: (roomId: string) => Promise<void>;
 }
 
-export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProps) {
+export default function ChatPanel({ room, currentUserId, onBack, onNavigateToRoom }: ChatPanelProps) {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -50,8 +54,14 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const calendarTriggerRef = useRef<HTMLButtonElement>(null);
-  const aiTriggerRef = useRef<HTMLButtonElement>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTransferOwnerOpen, setIsTransferOwnerOpen] = useState(false);
+  const [isTransferring, setIsTransferring] = useState(false);
+  const [isMemberListOpen, setIsMemberListOpen] = useState(false);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [isKicking, setIsKicking] = useState(false);
+  const settingsTriggerRef = useRef<HTMLButtonElement>(null);
+  const settingsDropdownRef = useRef<HTMLDivElement>(null);
   const inviteTriggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -265,6 +275,119 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
   const canDelete = (msg: Message) =>
     msg.senderId === currentUserId || currentUserRole === 'OWNER';
 
+  const handleKickMember = async (targetUserId: string, targetName: string) => {
+    if (!confirm(`${targetName}님을 방에서 추방하시겠습니까?`)) return;
+    setIsKicking(true);
+    try {
+      const token = await getAuthToken();
+      const res = await fetch(`${BACKEND_URL}/room-members/${roomId}/members/${targetUserId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) alert('추방에 실패했습니다.');
+    } finally {
+      setIsKicking(false);
+    }
+  };
+
+  const handleOpenDirectChat = async (targetUserId: string) => {
+    setIsCreatingChat(true);
+    try {
+      const token = await getAuthToken();
+      let roomId: string | null = null;
+
+      const res = await fetch(`${BACKEND_URL}/rooms/direct`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId }),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as { id: string };
+        roomId = data.id;
+      } else if (res.status === 409) {
+        // 이미 존재하는 DM방이면 내 방 목록에서 찾아 반환한다
+        const myRes = await fetch(`${BACKEND_URL}/rooms/my`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (myRes.ok) {
+          const myRooms = (await myRes.json()) as {
+            id: string;
+            type: string;
+            members: { userId: string }[];
+          }[];
+          const existing = myRooms.find(
+            (r) => r.type === 'DIRECT' && r.members.some((m) => m.userId === targetUserId),
+          );
+          roomId = existing?.id ?? null;
+        }
+      }
+
+      if (roomId) {
+        setIsMemberListOpen(false);
+        await onNavigateToRoom(roomId);
+      } else {
+        alert('채팅방을 찾을 수 없습니다.');
+      }
+    } catch {
+      alert('채팅 생성에 실패했습니다.');
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
+
+  const handleTransferOwner = async (targetUserId: string, targetName: string) => {
+    if (!confirm(`${targetName}님에게 OWNER 권한을 위임하시겠습니까?`)) return;
+    setIsTransferring(true);
+    try {
+      const token = await getAuthToken();
+      const res = await fetch(`${BACKEND_URL}/room-members/${roomId}/transfer-owner`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId }),
+      });
+      if (res.ok) {
+        setIsTransferOwnerOpen(false);
+        router.refresh();
+      } else {
+        alert('권한 위임에 실패했습니다.');
+      }
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const handleLeaveRoom = async () => {
+    if (!confirm('방에서 나가시겠습니까?')) return;
+    const token = await getAuthToken();
+    const res = await fetch(`${BACKEND_URL}/room-members/${roomId}/members/${currentUserId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      onBack();
+      router.refresh();
+    } else {
+      alert('방 나가기에 실패했습니다.');
+    }
+  };
+
+  // 설정 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        settingsDropdownRef.current &&
+        !settingsDropdownRef.current.contains(e.target as Node) &&
+        !settingsTriggerRef.current?.contains(e.target as Node)
+      ) {
+        setIsSettingsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSettingsOpen]);
+
   const onImageLoad = () => {
     if (initialLoadWindowRef.current) scrollToBottom('instant');
   };
@@ -291,7 +414,7 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
   };
 
   return (
-    <div ref={panelRef} className="w-105 h-full bg-background border-l border-border flex flex-col">
+    <div ref={panelRef} className="relative w-105 h-full bg-background border-l border-border flex flex-col">
       {/* 헤더 */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-border shrink-0">
         <button
@@ -324,48 +447,110 @@ export default function ChatPanel({ room, currentUserId, onBack }: ChatPanelProp
           );
         })()}
         {room.type === 'GROUP' && (
-          <div className="flex items-center gap-1">
+          <div className="relative">
             <button
-              ref={aiTriggerRef}
-              onClick={() => setIsAiPanelOpen((prev) => !prev)}
+              ref={settingsTriggerRef}
+              onClick={() => setIsSettingsOpen((prev) => !prev)}
               className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground cursor-pointer"
-              title="AI 일정 관리"
+              title="설정"
             >
-              <Bot className="w-4 h-4" />
+              <Settings className="w-4 h-4" />
             </button>
+            {isSettingsOpen && (
+              <div
+                ref={settingsDropdownRef}
+                className="absolute right-0 top-full mt-1 w-44 bg-background border border-border rounded-lg shadow-lg py-1 z-50"
+              >
+                <button
+                  onClick={() => { setIsSettingsOpen(false); setIsAiPanelOpen(true); }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer"
+                >
+                  AI 일정 관리
+                </button>
+                <button
+                  onClick={() => { setIsSettingsOpen(false); setIsCalendarOpen(true); }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer"
+                >
+                  방 일정 보기
+                </button>
+                <button
+                  onClick={() => { setIsSettingsOpen(false); router.push(`/rooms/${roomId}`); }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer"
+                >
+                  모임 페이지로 이동
+                </button>
+                <button
+                  onClick={() => { setIsSettingsOpen(false); setIsMemberListOpen(true); }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer"
+                >
+                  멤버 목록 보기
+                </button>
+                {currentUserRole === 'OWNER' && (
+                  <button
+                    onClick={() => { setIsSettingsOpen(false); setIsTransferOwnerOpen(true); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    방 권한 위임
+                  </button>
+                )}
+                <hr className="my-1 border-border" />
+                {currentUserRole === 'OWNER' ? (
+                  <div className="px-4 py-2 text-sm text-muted-foreground/60 cursor-not-allowed select-none">
+                    방 나가기 (권한 위임 후 가능)
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setIsSettingsOpen(false); handleLeaveRoom(); }}
+                    className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    방 나가기
+                  </button>
+                )}
+              </div>
+            )}
             <AiSchedulePanel
               isOpen={isAiPanelOpen}
               onClose={() => setIsAiPanelOpen(false)}
               roomId={roomId}
-              triggerRef={aiTriggerRef}
+              triggerRef={settingsTriggerRef}
               containerRef={panelRef}
             />
-            <button
-              ref={calendarTriggerRef}
-              onClick={() => setIsCalendarOpen((prev) => !prev)}
-              className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground cursor-pointer"
-              title="방 일정 보기"
-            >
-              <CalendarDays className="w-4 h-4" />
-            </button>
             <RoomScheduleCalendar
               isOpen={isCalendarOpen}
               onClose={() => setIsCalendarOpen(false)}
               roomId={roomId}
               isOwner={currentUserRole === 'OWNER'}
-              triggerRef={calendarTriggerRef}
+              triggerRef={settingsTriggerRef}
               containerRef={panelRef}
             />
-            <Link
-              href={`/rooms/${roomId}`}
-              className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground"
-              title="모임 페이지로 이동"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </Link>
           </div>
         )}
       </div>
+
+      {/* 멤버 목록 패널 */}
+      {isMemberListOpen && (
+        <MemberListPanel
+          members={room.members}
+          currentUserId={currentUserId}
+          isOwner={currentUserRole === 'OWNER'}
+          onClose={() => setIsMemberListOpen(false)}
+          onChat={handleOpenDirectChat}
+          onKick={handleKickMember}
+          isChatLoading={isCreatingChat}
+          isKickLoading={isKicking}
+        />
+      )}
+
+      {/* 권한 위임 패널 */}
+      {isTransferOwnerOpen && (
+        <TransferOwnerPanel
+          members={room.members}
+          currentUserId={currentUserId}
+          onClose={() => setIsTransferOwnerOpen(false)}
+          onTransfer={handleTransferOwner}
+          isLoading={isTransferring}
+        />
+      )}
 
       {/* 메시지 목록 */}
       <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3 flex flex-col">

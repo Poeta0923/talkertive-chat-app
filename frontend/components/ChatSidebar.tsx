@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
 import { X } from 'lucide-react';
 import { useChatSocket } from '@/hooks/useChatSocket';
@@ -54,6 +54,15 @@ export default function ChatSidebar({
     markRoomAsRead(room.id);
   };
 
+  // 채팅 패널 내부에서 다른 방으로 이동할 때 사용 (DM 생성 후 진입 등)
+  const handleNavigateToRoom = useCallback(
+    async (roomId: string) => {
+      await fetchRooms();
+      setPendingRoomId(roomId);
+    },
+    [fetchRooms, setPendingRoomId],
+  );
+
   const getRoomDisplay = (room: MyRoom) => {
     if (room.type === 'GROUP') {
       return {
@@ -88,6 +97,7 @@ export default function ChatSidebar({
             room={selectedRoom}
             currentUserId={currentUserId}
             onBack={() => setSelectedRoom(null)}
+            onNavigateToRoom={handleNavigateToRoom}
           />
         )}
 
