@@ -3,7 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, Send, Pencil, Trash2, Check, X, Paperclip, Plus, Settings } from 'lucide-react';
+import { ChevronRight, Send, Pencil, Trash2, Check, X, Paperclip, Settings } from 'lucide-react';
 import type { MyRoom } from '@/hooks/useMyRooms';
 import { formatTime } from '@/lib/utils';
 import { getAuthToken } from '@/lib/auth-client';
@@ -62,7 +62,7 @@ export default function ChatPanel({ room, currentUserId, onBack, onNavigateToRoo
   const [isKicking, setIsKicking] = useState(false);
   const settingsTriggerRef = useRef<HTMLButtonElement>(null);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
-  const inviteTriggerRef = useRef<HTMLButtonElement>(null);
+
   const panelRef = useRef<HTMLDivElement>(null);
 
   const socketRef = useRef<Socket | null>(null);
@@ -427,23 +427,43 @@ export default function ChatPanel({ room, currentUserId, onBack, onNavigateToRoo
         {room.type === 'DIRECT' && (() => {
           const otherUserId = room.members.find((m) => m.userId !== currentUserId)?.userId ?? '';
           return (
-            <>
+            <div className="relative">
               <button
-                ref={inviteTriggerRef}
-                onClick={() => setIsInviteOpen((prev) => !prev)}
+                ref={settingsTriggerRef}
+                onClick={() => setIsSettingsOpen((prev) => !prev)}
                 className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground cursor-pointer"
-                title="모임 초대"
+                title="설정"
               >
-                <Plus className="w-4 h-4" />
+                <Settings className="w-4 h-4" />
               </button>
+              {isSettingsOpen && (
+                <div
+                  ref={settingsDropdownRef}
+                  className="absolute right-0 top-full mt-1 w-44 bg-background border border-border rounded-lg shadow-lg py-1 z-50"
+                >
+                  <button
+                    onClick={() => { setIsSettingsOpen(false); setIsInviteOpen(true); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    모임 초대하기
+                  </button>
+                  <hr className="my-1 border-border" />
+                  <button
+                    onClick={() => { setIsSettingsOpen(false); handleLeaveRoom(); }}
+                    className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    방 나가기
+                  </button>
+                </div>
+              )}
               <InviteToGroupPanel
                 isOpen={isInviteOpen}
                 onClose={() => setIsInviteOpen(false)}
                 targetUserId={otherUserId}
-                triggerRef={inviteTriggerRef}
+                triggerRef={settingsTriggerRef}
                 containerRef={panelRef}
               />
-            </>
+            </div>
           );
         })()}
         {room.type === 'GROUP' && (
