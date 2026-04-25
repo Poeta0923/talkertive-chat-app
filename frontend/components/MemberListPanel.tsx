@@ -56,9 +56,12 @@ export default function MemberListPanel({
                 <p className="text-sm truncate">
                   {m.user.name ?? '알 수 없음'}
                   {isSelf && <span className="text-muted-foreground"> (나)</span>}
+                  {m.role === 'OWNER' && (
+                    <span className="text-xs text-muted-foreground ml-1.5">방장</span>
+                  )}
                 </p>
-                {m.role === 'OWNER' && (
-                  <p className="text-xs text-muted-foreground">방장</p>
+                {m.user.description && (
+                  <p className="text-xs text-muted-foreground truncate">{m.user.description}</p>
                 )}
               </div>
               {!isSelf && (

@@ -20,7 +20,7 @@ export interface MyRoom {
   members: {
     userId: string;
     role: string;
-    user: { id: string; name: string | null; image: string | null };
+    user: { id: string; name: string | null; image: string | null; description: string | null };
   }[];
 }
 

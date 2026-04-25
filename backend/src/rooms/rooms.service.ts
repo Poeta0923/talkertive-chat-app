@@ -162,7 +162,7 @@ export class RoomsService {
             userId: true,
             role: true,
             lastReadAt: true,
-            user: { select: { id: true, name: true, image: true } },
+            user: { select: { id: true, name: true, image: true, description: true } },
           },
         },
         _count: {
