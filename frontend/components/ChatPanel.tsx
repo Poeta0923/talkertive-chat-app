@@ -442,6 +442,12 @@ export default function ChatPanel({ room, currentUserId, onBack, onNavigateToRoo
                   className="absolute right-0 top-full mt-1 w-44 bg-background border border-border rounded-lg shadow-lg py-1 z-50"
                 >
                   <button
+                    onClick={() => { setIsSettingsOpen(false); setIsMemberListOpen(true); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    멤버 목록 보기
+                  </button>
+                  <button
                     onClick={() => { setIsSettingsOpen(false); setIsInviteOpen(true); }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer"
                   >
