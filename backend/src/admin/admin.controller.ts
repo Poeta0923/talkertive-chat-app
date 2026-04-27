@@ -50,7 +50,7 @@ export class AdminController {
 
   @Get('stats/schedules')
   @ApiOperation({ summary: '일정 통계 (ADMIN 전용)' })
-  @ApiOkResponse({ description: '전체/이번달 일정 수, 최근 30일 생성 추이' })
+  @ApiOkResponse({ description: '전체/이번달 일정 수, 최근 30일 일정 날짜(time) 기준 추이' })
   getScheduleStats() {
     return this.adminService.getScheduleStats();
   }
