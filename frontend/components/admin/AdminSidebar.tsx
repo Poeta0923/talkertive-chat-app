@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { label: '대시보드', href: '/admin/dashboard' },
   { label: '유저 관리', href: '/admin/users' },
   { label: '모임 관리', href: '/admin/rooms' },
+  { label: '배너 관리', href: '/admin/banners' },
 ];
 
 export default function AdminSidebar() {
