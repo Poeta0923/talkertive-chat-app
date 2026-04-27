@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AppControllerGetHelloData, AppControllerGetHelloResponses, AppControllerTestUserData, AppControllerTestUserResponses, BannerControllerDeleteData, BannerControllerDeleteResponses, BannerControllerFindAllData, BannerControllerFindAllResponses, MediaControllerUploadBannerData, MediaControllerUploadBannerResponses, MediaControllerUploadMessageAttachmentData, MediaControllerUploadMessageAttachmentResponses, MediaControllerUploadRoomCoverData, MediaControllerUploadRoomCoverResponses, MediaControllerUploadRoomProfileData, MediaControllerUploadRoomProfileResponses, MediaControllerUploadUserProfileData, MediaControllerUploadUserProfileResponses, RoomMembersControllerInviteMemberData, RoomMembersControllerInviteMemberResponses, RoomMembersControllerRemoveMemberData, RoomMembersControllerRemoveMemberResponses, RoomMembersControllerTransferOwnerData, RoomMembersControllerTransferOwnerResponses, RoomsControllerCreateDirectRoomData, RoomsControllerCreateDirectRoomResponses, RoomsControllerCreateGroupRoomData, RoomsControllerCreateGroupRoomResponses, RoomsControllerDeleteDirectRoomData, RoomsControllerDeleteDirectRoomResponses, RoomsControllerDeleteGroupRoomData, RoomsControllerDeleteGroupRoomResponses, RoomsControllerFindAllGroupRoomsData, RoomsControllerFindAllGroupRoomsResponses, RoomsControllerFindMyRoomsData, RoomsControllerFindMyRoomsResponses, RoomsControllerFindOneDirectRoomData, RoomsControllerFindOneDirectRoomResponses, RoomsControllerFindOneGroupRoomData, RoomsControllerFindOneGroupRoomResponses, RoomsControllerUpdateGroupRoomData, RoomsControllerUpdateGroupRoomResponses, SchedulesControllerCreateScheduleData, SchedulesControllerCreateScheduleResponses, SchedulesControllerDeleteScheduleData, SchedulesControllerDeleteScheduleResponses, SchedulesControllerFindMySchedulesData, SchedulesControllerFindMySchedulesResponses, SchedulesControllerFindRoomSchedulesData, SchedulesControllerFindRoomSchedulesResponses, SchedulesControllerProcessAiScheduleData, SchedulesControllerProcessAiScheduleResponses, SchedulesControllerUpdateScheduleData, SchedulesControllerUpdateScheduleResponses, UsersControllerGetMeData, UsersControllerGetMeResponses, UsersControllerUpdateMeData, UsersControllerUpdateMeResponses } from './types.gen';
+import type { AdminControllerDeleteRoomData, AdminControllerDeleteRoomResponses, AdminControllerDeleteUserData, AdminControllerDeleteUserResponses, AdminControllerFindAllRoomsData, AdminControllerFindAllRoomsResponses, AdminControllerFindAllUsersData, AdminControllerFindAllUsersResponses, AdminControllerFindOneRoomData, AdminControllerFindOneRoomResponses, AdminControllerFindOneUserData, AdminControllerFindOneUserResponses, AdminControllerGetRoomStatsData, AdminControllerGetRoomStatsResponses, AdminControllerGetScheduleStatsData, AdminControllerGetScheduleStatsResponses, AdminControllerGetUserStatsData, AdminControllerGetUserStatsResponses, AppControllerGetHelloData, AppControllerGetHelloResponses, AppControllerTestUserData, AppControllerTestUserResponses, BannerControllerDeleteData, BannerControllerDeleteResponses, BannerControllerFindAllData, BannerControllerFindAllResponses, HealthControllerCheckData, HealthControllerCheckErrors, HealthControllerCheckResponses, MediaControllerUploadBannerData, MediaControllerUploadBannerResponses, MediaControllerUploadMessageAttachmentData, MediaControllerUploadMessageAttachmentResponses, MediaControllerUploadRoomCoverData, MediaControllerUploadRoomCoverResponses, MediaControllerUploadRoomProfileData, MediaControllerUploadRoomProfileResponses, MediaControllerUploadUserProfileData, MediaControllerUploadUserProfileResponses, RoomMembersControllerInviteMemberData, RoomMembersControllerInviteMemberResponses, RoomMembersControllerRemoveMemberData, RoomMembersControllerRemoveMemberResponses, RoomMembersControllerTransferOwnerData, RoomMembersControllerTransferOwnerResponses, RoomsControllerCreateDirectRoomData, RoomsControllerCreateDirectRoomResponses, RoomsControllerCreateGroupRoomData, RoomsControllerCreateGroupRoomResponses, RoomsControllerDeleteDirectRoomData, RoomsControllerDeleteDirectRoomResponses, RoomsControllerDeleteGroupRoomData, RoomsControllerDeleteGroupRoomResponses, RoomsControllerFindAllGroupRoomsData, RoomsControllerFindAllGroupRoomsResponses, RoomsControllerFindMyRoomsData, RoomsControllerFindMyRoomsResponses, RoomsControllerFindOneDirectRoomData, RoomsControllerFindOneDirectRoomResponses, RoomsControllerFindOneGroupRoomData, RoomsControllerFindOneGroupRoomResponses, RoomsControllerUpdateGroupRoomData, RoomsControllerUpdateGroupRoomResponses, SchedulesControllerCreateScheduleData, SchedulesControllerCreateScheduleResponses, SchedulesControllerDeleteScheduleData, SchedulesControllerDeleteScheduleResponses, SchedulesControllerFindMySchedulesData, SchedulesControllerFindMySchedulesResponses, SchedulesControllerFindRoomSchedulesData, SchedulesControllerFindRoomSchedulesResponses, SchedulesControllerProcessAiScheduleData, SchedulesControllerProcessAiScheduleResponses, SchedulesControllerUpdateScheduleData, SchedulesControllerUpdateScheduleResponses, UsersControllerGetMeData, UsersControllerGetMeResponses, UsersControllerUpdateMeData, UsersControllerUpdateMeResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -316,4 +316,90 @@ export const schedulesControllerProcessAiSchedule = <ThrowOnError extends boolea
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * 서버 상태 확인 (DB 연결, Redis 연결)
+ */
+export const healthControllerCheck = <ThrowOnError extends boolean = false>(options?: Options<HealthControllerCheckData, ThrowOnError>) => (options?.client ?? client).get<HealthControllerCheckResponses, HealthControllerCheckErrors, ThrowOnError>({ url: '/health', ...options });
+
+/**
+ * 유저 통계 (ADMIN 전용)
+ */
+export const adminControllerGetUserStats = <ThrowOnError extends boolean = false>(options?: Options<AdminControllerGetUserStatsData, ThrowOnError>) => (options?.client ?? client).get<AdminControllerGetUserStatsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/stats/users',
+    ...options
+});
+
+/**
+ * 모임 통계 (ADMIN 전용)
+ */
+export const adminControllerGetRoomStats = <ThrowOnError extends boolean = false>(options?: Options<AdminControllerGetRoomStatsData, ThrowOnError>) => (options?.client ?? client).get<AdminControllerGetRoomStatsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/stats/rooms',
+    ...options
+});
+
+/**
+ * 일정 통계 (ADMIN 전용)
+ */
+export const adminControllerGetScheduleStats = <ThrowOnError extends boolean = false>(options?: Options<AdminControllerGetScheduleStatsData, ThrowOnError>) => (options?.client ?? client).get<AdminControllerGetScheduleStatsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/stats/schedules',
+    ...options
+});
+
+/**
+ * 유저 목록 조회 (ADMIN 전용)
+ */
+export const adminControllerFindAllUsers = <ThrowOnError extends boolean = false>(options?: Options<AdminControllerFindAllUsersData, ThrowOnError>) => (options?.client ?? client).get<AdminControllerFindAllUsersResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/users',
+    ...options
+});
+
+/**
+ * 유저 강제 탈퇴 (ADMIN 전용)
+ */
+export const adminControllerDeleteUser = <ThrowOnError extends boolean = false>(options: Options<AdminControllerDeleteUserData, ThrowOnError>) => (options.client ?? client).delete<AdminControllerDeleteUserResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/users/{id}',
+    ...options
+});
+
+/**
+ * 유저 상세 조회 (ADMIN 전용)
+ */
+export const adminControllerFindOneUser = <ThrowOnError extends boolean = false>(options: Options<AdminControllerFindOneUserData, ThrowOnError>) => (options.client ?? client).get<AdminControllerFindOneUserResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/users/{id}',
+    ...options
+});
+
+/**
+ * 모임 목록 조회 (ADMIN 전용)
+ */
+export const adminControllerFindAllRooms = <ThrowOnError extends boolean = false>(options?: Options<AdminControllerFindAllRoomsData, ThrowOnError>) => (options?.client ?? client).get<AdminControllerFindAllRoomsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/rooms',
+    ...options
+});
+
+/**
+ * 모임 강제 삭제 (ADMIN 전용)
+ */
+export const adminControllerDeleteRoom = <ThrowOnError extends boolean = false>(options: Options<AdminControllerDeleteRoomData, ThrowOnError>) => (options.client ?? client).delete<AdminControllerDeleteRoomResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/rooms/{id}',
+    ...options
+});
+
+/**
+ * 모임 상세 조회 (ADMIN 전용)
+ */
+export const adminControllerFindOneRoom = <ThrowOnError extends boolean = false>(options: Options<AdminControllerFindOneRoomData, ThrowOnError>) => (options.client ?? client).get<AdminControllerFindOneRoomResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/rooms/{id}',
+    ...options
 });
