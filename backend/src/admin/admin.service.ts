@@ -102,35 +102,36 @@ export class AdminService {
   }
 
   async getScheduleStats() {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const thirtyDaysAgo = new Date(now);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
-    thirtyDaysAgo.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const ninetyDaysLater = new Date(today);
+    ninetyDaysLater.setDate(ninetyDaysLater.getDate() + 89);
+    ninetyDaysLater.setHours(23, 59, 59, 999);
 
-    const [total, thisMonthCount, recentSchedules] = await Promise.all([
+    const [total, thisMonthCount, upcomingSchedules] = await Promise.all([
       this.prisma.roomSchedule.count(),
       this.prisma.roomSchedule.count({ where: { time: { gte: monthStart } } }),
       this.prisma.roomSchedule.findMany({
-        where: { time: { gte: thirtyDaysAgo } },
+        where: { time: { gte: today, lte: ninetyDaysLater } },
         select: { time: true },
       }),
     ]);
 
     const dailyMap: Record<string, number> = {};
-    recentSchedules.forEach(({ time }) => {
+    upcomingSchedules.forEach(({ time }) => {
       const date = time.toISOString().split('T')[0];
       dailyMap[date] = (dailyMap[date] || 0) + 1;
     });
 
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-      const d = new Date(thirtyDaysAgo);
+    const next90Days = Array.from({ length: 90 }, (_, i) => {
+      const d = new Date(today);
       d.setDate(d.getDate() + i);
       const date = d.toISOString().split('T')[0];
       return { date, count: dailyMap[date] || 0 };
     });
 
-    return { total, thisMonthCount, last30Days };
+    return { total, thisMonthCount, next90Days };
   }
 
   // ─── 유저 관리 ───────────────────────────────────────────────────────────
