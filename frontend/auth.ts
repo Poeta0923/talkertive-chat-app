@@ -79,10 +79,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   pages: {},
   callbacks: {
+    async jwt({ token, user }) {
+      // 최초 로그인 시 user 객체가 존재 — DB에서 가져온 role을 토큰에 저장
+      if (user) {
+        token.role = (user as { role?: string }).role ?? 'USER';
+      }
+      return token;
+    },
     session({ session, token }) {
       // JWT 전략에서는 token.sub에 userId가 담겨 있으므로 session.user.id에 복사
       if (token.sub) {
         session.user.id = token.sub;
+      }
+      if (token.role) {
+        session.user.role = token.role as string;
       }
       return session;
     },
