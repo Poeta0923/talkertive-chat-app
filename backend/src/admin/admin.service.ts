@@ -110,16 +110,16 @@ export class AdminService {
 
     const [total, thisMonthCount, recentSchedules] = await Promise.all([
       this.prisma.roomSchedule.count(),
-      this.prisma.roomSchedule.count({ where: { createdAt: { gte: monthStart } } }),
+      this.prisma.roomSchedule.count({ where: { time: { gte: monthStart } } }),
       this.prisma.roomSchedule.findMany({
-        where: { createdAt: { gte: thirtyDaysAgo } },
-        select: { createdAt: true },
+        where: { time: { gte: thirtyDaysAgo } },
+        select: { time: true },
       }),
     ]);
 
     const dailyMap: Record<string, number> = {};
-    recentSchedules.forEach(({ createdAt }) => {
-      const date = createdAt.toISOString().split('T')[0];
+    recentSchedules.forEach(({ time }) => {
+      const date = time.toISOString().split('T')[0];
       dailyMap[date] = (dailyMap[date] || 0) + 1;
     });
 
