@@ -15,7 +15,7 @@ export default function ScheduleStatsSection({ stats }: Props) {
 
   return (
     <div className="rounded-lg border border-border p-5">
-      <p className="text-sm font-medium mb-4">최근 30일 일정 생성 추이</p>
+      <p className="text-sm font-medium mb-4">최근 30일 예정 일정 추이</p>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={lineData}>
           <XAxis dataKey="date" tick={{ fontSize: 11 }} interval={4} />
