@@ -3,6 +3,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Banner } from 'generated/prisma';
+import { UpdateBannerDto } from './dto/update-banner.dto';
 
 const BANNER_ALL_KEY = 'banner:all';
 // 배너는 자주 바뀌지 않는 정적 콘텐츠이므로 5분 TTL 적용
@@ -24,6 +25,15 @@ export class BannerService {
     });
     await this.cache.set(BANNER_ALL_KEY, result, BANNER_TTL_MS);
     return result;
+  }
+
+  async update(id: string, dto: UpdateBannerDto): Promise<Banner> {
+    const banner = await this.prisma.banner.findUnique({ where: { id } });
+    if (!banner) throw new NotFoundException('배너를 찾을 수 없습니다.');
+
+    const updated = await this.prisma.banner.update({ where: { id }, data: dto });
+    await this.cache.del(BANNER_ALL_KEY);
+    return updated;
   }
 
   async delete(id: string): Promise<Banner> {
