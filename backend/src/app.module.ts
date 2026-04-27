@@ -18,6 +18,7 @@ import { MediaModule } from './media/media.module';
 import { UsersModule } from './users/users.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { HealthModule } from './health/health.module';
+import { AdminModule } from './admin/admin.module';
 import { createWinstonOptions } from './common/logger/winston.config';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { HttpLoggingMiddleware } from './common/middleware/http-logging.middleware';
@@ -51,6 +52,7 @@ import { HttpLoggingMiddleware } from './common/middleware/http-logging.middlewa
     UsersModule,
     SchedulesModule,
     HealthModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
