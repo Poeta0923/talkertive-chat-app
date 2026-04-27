@@ -843,3 +843,244 @@ export type SchedulesControllerProcessAiScheduleResponses = {
 };
 
 export type SchedulesControllerProcessAiScheduleResponse = SchedulesControllerProcessAiScheduleResponses[keyof SchedulesControllerProcessAiScheduleResponses];
+
+export type HealthControllerCheckData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/health';
+};
+
+export type HealthControllerCheckErrors = {
+    /**
+     * The Health Check is not successful
+     */
+    503: {
+        status?: string;
+        info?: {
+            [key: string]: {
+                status: string;
+                [key: string]: unknown;
+            };
+        } | null;
+        error?: {
+            [key: string]: {
+                status: string;
+                [key: string]: unknown;
+            };
+        } | null;
+        details?: {
+            [key: string]: {
+                status: string;
+                [key: string]: unknown;
+            };
+        };
+    };
+};
+
+export type HealthControllerCheckError = HealthControllerCheckErrors[keyof HealthControllerCheckErrors];
+
+export type HealthControllerCheckResponses = {
+    /**
+     * The Health Check is successful
+     */
+    200: {
+        status?: string;
+        info?: {
+            [key: string]: {
+                status: string;
+                [key: string]: unknown;
+            };
+        } | null;
+        error?: {
+            [key: string]: {
+                status: string;
+                [key: string]: unknown;
+            };
+        } | null;
+        details?: {
+            [key: string]: {
+                status: string;
+                [key: string]: unknown;
+            };
+        };
+    };
+};
+
+export type HealthControllerCheckResponse = HealthControllerCheckResponses[keyof HealthControllerCheckResponses];
+
+export type AdminControllerGetUserStatsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/admin/stats/users';
+};
+
+export type AdminControllerGetUserStatsResponses = {
+    /**
+     * 전체/신규 유저 수, 최근 30일 가입 추이, 소셜 비율
+     */
+    200: unknown;
+};
+
+export type AdminControllerGetRoomStatsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/admin/stats/rooms';
+};
+
+export type AdminControllerGetRoomStatsResponses = {
+    /**
+     * 전체 모임 수, 카테고리별 분포, 최근 30일 생성 추이
+     */
+    200: unknown;
+};
+
+export type AdminControllerGetScheduleStatsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/admin/stats/schedules';
+};
+
+export type AdminControllerGetScheduleStatsResponses = {
+    /**
+     * 전체/이번달 일정 수, 최근 30일 생성 추이
+     */
+    200: unknown;
+};
+
+export type AdminControllerFindAllUsersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * 건너뛸 수
+         */
+        skip?: number;
+        /**
+         * 가져올 수
+         */
+        take?: number;
+        /**
+         * 이름 또는 이메일 검색어
+         */
+        search?: string;
+        /**
+         * 역할 필터 (USER | ADMIN)
+         */
+        role?: string;
+    };
+    url: '/admin/users';
+};
+
+export type AdminControllerFindAllUsersResponses = {
+    /**
+     * 유저 목록 및 전체 수
+     */
+    200: unknown;
+};
+
+export type AdminControllerDeleteUserData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/admin/users/{id}';
+};
+
+export type AdminControllerDeleteUserResponses = {
+    /**
+     * 삭제 완료
+     */
+    204: void;
+};
+
+export type AdminControllerDeleteUserResponse = AdminControllerDeleteUserResponses[keyof AdminControllerDeleteUserResponses];
+
+export type AdminControllerFindOneUserData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/admin/users/{id}';
+};
+
+export type AdminControllerFindOneUserResponses = {
+    /**
+     * 유저 기본 정보 + 주관 모임 + 참가 모임 목록
+     */
+    200: unknown;
+};
+
+export type AdminControllerFindAllRoomsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * 건너뛸 수
+         */
+        skip?: number;
+        /**
+         * 가져올 수
+         */
+        take?: number;
+        /**
+         * 모임 이름 검색어
+         */
+        search?: string;
+        /**
+         * 카테고리 필터
+         */
+        category?: 'STUDY' | 'SPORTS' | 'FOOD' | 'TRAVEL' | 'HOBBY' | 'CULTURE' | 'TECH' | 'ETC';
+        /**
+         * 방 타입 필터
+         */
+        type?: 'DIRECT' | 'GROUP';
+    };
+    url: '/admin/rooms';
+};
+
+export type AdminControllerFindAllRoomsResponses = {
+    /**
+     * 모임 목록 및 전체 수
+     */
+    200: unknown;
+};
+
+export type AdminControllerDeleteRoomData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/admin/rooms/{id}';
+};
+
+export type AdminControllerDeleteRoomResponses = {
+    /**
+     * 삭제 완료
+     */
+    204: void;
+};
+
+export type AdminControllerDeleteRoomResponse = AdminControllerDeleteRoomResponses[keyof AdminControllerDeleteRoomResponses];
+
+export type AdminControllerFindOneRoomData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/admin/rooms/{id}';
+};
+
+export type AdminControllerFindOneRoomResponses = {
+    /**
+     * 모임 정보 + 멤버 목록 + 일정 목록
+     */
+    200: unknown;
+};
