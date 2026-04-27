@@ -20,7 +20,7 @@ export type RoomStats = {
 export type ScheduleStats = {
   total: number;
   thisMonthCount: number;
-  last30Days: DailyCount[];
+  next90Days: DailyCount[];
 };
 
 export type AdminUser = {
