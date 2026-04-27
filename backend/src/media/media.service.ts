@@ -174,6 +174,18 @@ export class MediaService {
   }
 
   /**
+   * 기존 배너 이미지를 교체한다. 기존 S3 오브젝트를 삭제한 뒤 새 이미지를 업로드한다.
+   */
+  async updateBannerImage(id: string, file: Express.Multer.File) {
+    const banner = await this.prisma.banner.findUnique({ where: { id } });
+    if (!banner) throw new NotFoundException('배너를 찾을 수 없습니다.');
+
+    await this.deleteIfExists(banner.imageUrl);
+    const url = await this.upload(file, this.buildKey('banners', file.originalname));
+    return this.prisma.banner.update({ where: { id }, data: { imageUrl: url } });
+  }
+
+  /**
    * 메시지 첨부파일 업로드 후 CloudFront URL 반환 (메시지 전송 시 별도 저장)
    * S3 경로: messages/{roomId}/{uuid}.{ext}
    */

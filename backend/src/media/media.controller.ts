@@ -4,6 +4,7 @@ import {
   Body,
   Controller,
   Param,
+  Patch,
   Post,
   Req,
   UploadedFile,
@@ -180,6 +181,31 @@ export class MediaController {
     if (!file) throw new BadRequestException('파일이 없습니다');
     if (!linkUrl) throw new BadRequestException('linkUrl이 없습니다');
     return this.mediaService.uploadBanner(file, linkUrl);
+  }
+
+  @Patch('banners/:id')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles('ADMIN')
+  @UseInterceptors(FileInterceptor('file', IMAGE_INTERCEPTOR_OPTIONS))
+  @ApiOperation({ summary: '배너 이미지 교체 (ADMIN 전용)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary', description: '새 배너 이미지' },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiOkResponse({ description: '업데이트된 Banner 레코드' })
+  @ApiBearerAuth('access-token')
+  async updateBannerImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id') id: string,
+  ) {
+    if (!file) throw new BadRequestException('파일이 없습니다');
+    return this.mediaService.updateBannerImage(id, file);
   }
 
   @Post('messages/:roomId')
