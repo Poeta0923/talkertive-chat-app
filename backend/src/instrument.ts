@@ -11,9 +11,8 @@ Sentry.init({
   integrations: [nodeProfilingIntegration()],
 
   // 트랜잭션(요청)의 10%를 성능 모니터링 대상으로 샘플링
-  // 프로덕션 트래픽이 많아지면 0.1~0.2로 낮출 것
-  tracesSampleRate: 1.0,
-  profilesSampleRate: 1.0,
+  tracesSampleRate: 0.1,
+  profilesSampleRate: 0.1,
 
   // 개발 환경에서는 Sentry로 전송하지 않음 — 노이즈 방지
   enabled: process.env.NODE_ENV === 'production',
