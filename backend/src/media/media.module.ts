@@ -14,5 +14,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
   ],
   controllers: [MediaController],
   providers: [MediaService, RolesGuard],
+  exports: [MediaService],
 })
 export class MediaModule {}

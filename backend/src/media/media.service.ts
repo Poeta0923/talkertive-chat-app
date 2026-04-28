@@ -62,7 +62,7 @@ export class MediaService {
    * CloudFront URL에서 S3 키를 추출해 기존 오브젝트를 삭제한다.
    * url이 null이거나 현재 도메인과 다른 외부 URL이면 삭제를 건너뛴다.
    */
-  private async deleteIfExists(url: string | null) {
+  async deleteIfExists(url: string | null) {
     if (!url || !url.startsWith(`https://${this.cloudFrontDomain}/`)) return;
     const key = url.replace(`https://${this.cloudFrontDomain}/`, '');
     await this.s3Client.send(

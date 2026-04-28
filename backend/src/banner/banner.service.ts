@@ -4,6 +4,7 @@ import type { Cache } from 'cache-manager';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Banner } from 'generated/prisma';
 import { UpdateBannerDto } from './dto/update-banner.dto';
+import { MediaService } from '../media/media.service';
 
 const BANNER_ALL_KEY = 'banner:all';
 // 배너는 자주 바뀌지 않는 정적 콘텐츠이므로 5분 TTL 적용
@@ -14,6 +15,7 @@ export class BannerService {
   constructor(
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cache: Cache,
+    private media: MediaService,
   ) {}
 
   async findAll(): Promise<Banner[]> {
@@ -43,6 +45,7 @@ export class BannerService {
       throw new NotFoundException('배너를 찾을 수 없습니다.');
     }
 
+    await this.media.deleteIfExists(banner.imageUrl);
     const deleted = await this.prisma.banner.delete({ where: { id } });
     // 삭제 후 캐시 무효화 — 다음 GET /banner 요청에서 DB를 새로 조회
     await this.cache.del(BANNER_ALL_KEY);
