@@ -43,17 +43,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           },
         });
 
-        if (!user) {
-          throw new Error("존재하지 않는 이메일입니다.");
+        // 이메일 존재 여부를 노출하지 않기 위해 두 경우 모두 동일한 메시지 반환
+        const AUTH_ERROR = "이메일 또는 비밀번호가 올바르지 않습니다.";
+
+        if (!user || !user.hashedPassword) {
+          throw new Error(AUTH_ERROR);
         }
 
-        const passwordMatch = comparePassword(
+        const passwordMatch = await comparePassword(
           credentials.password as string,
-          user.hashedPassword as string,
+          user.hashedPassword,
         );
 
         if (!passwordMatch) {
-          throw new Error("비밀번호가 일치하지 않습니다.");
+          throw new Error(AUTH_ERROR);
         }
 
         return user;
@@ -66,7 +69,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // NestJS 백엔드와 JWT 형식을 공유하기 위해 jsonwebtoken으로 직접 인코딩/디코딩
   jwt: {
     encode: async ({ token, secret }) => {
-      return jwt.sign(token as jwt.JwtPayload, secret as string);
+      return jwt.sign(token as jwt.JwtPayload, secret as string, { expiresIn: '7d' });
     },
     decode: async ({ token, secret }) => {
       try {
