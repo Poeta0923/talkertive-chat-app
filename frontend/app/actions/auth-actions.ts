@@ -18,6 +18,14 @@ export async function signUp({
     name: string;
 }) {
     try{
+        if (password.length < 8) {
+            return { status: 'error', message: '비밀번호는 8자 이상이어야 합니다.' };
+        }
+
+        if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+            return { status: 'error', message: '비밀번호는 영문과 숫자를 모두 포함해야 합니다.' };
+        }
+
         const existingUser = await prisma.user.findUnique({
             where: {
                 email,
@@ -32,7 +40,7 @@ export async function signUp({
             data : {
                 email,
                 name,
-                hashedPassword: saltAndHashPassword(password),
+                hashedPassword: await saltAndHashPassword(password),
             },
         });
 
