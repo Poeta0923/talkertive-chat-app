@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma, RoomType } from 'generated/prisma';
+import { MediaService } from '../media/media.service';
 import { AdminUserQueryDto } from './dto/admin-user-query.dto';
 import { AdminRoomQueryDto } from './dto/admin-room-query.dto';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private media: MediaService,
+  ) {}
 
   // ─── 통계 ─────────────────────────────────────────────────────────────────
 
@@ -217,6 +221,7 @@ export class AdminService {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('유저를 찾을 수 없습니다.');
 
+    await this.media.deleteIfExists(user.image);
     await this.prisma.$transaction([
       // Message.senderId에 onDelete가 없으므로 메시지 먼저 삭제
       // MessageAttachment, MessageRead는 Message onDelete: Cascade로 자동 처리
@@ -286,6 +291,10 @@ export class AdminService {
     const room = await this.prisma.room.findUnique({ where: { id } });
     if (!room) throw new NotFoundException('모임을 찾을 수 없습니다.');
 
+    await Promise.all([
+      this.media.deleteIfExists(room.coverImage),
+      this.media.deleteIfExists(room.profileImage),
+    ]);
     // Room 삭제 시 Cascade: Message, RoomMember, RoomLike, RoomSchedule 자동 삭제
     // Message 삭제 시 Cascade: MessageAttachment, MessageRead 자동 삭제
     await this.prisma.room.delete({ where: { id } });

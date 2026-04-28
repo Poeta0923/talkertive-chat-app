@@ -14,6 +14,7 @@ import { CreateGroupRoomDto } from './dto/create-group-room.dto';
 import { CreateDirectRoomDto } from './dto/create-direct-room.dto';
 import { UpdateGroupRoomDto } from './dto/update-group-room.dto';
 import { Prisma, Room, RoomCategory, RoomType } from 'generated/prisma';
+import { MediaService } from '../media/media.service';
 
 // ─── 캐시 키 헬퍼 ───────────────────────────────────────────────────────────
 const roomDetailKey = (roomId: string) => `rooms:group:${roomId}`;
@@ -38,6 +39,7 @@ export class RoomsService {
   constructor(
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cache: Cache,
+    private media: MediaService,
   ) {}
 
   /**
@@ -286,9 +288,13 @@ export class RoomsService {
    * 삭제 성공 후 해당 방의 상세 캐시를 무효화한다.
    */
   async deleteGroupRoom(userId: string, roomId: string): Promise<void> {
-    const member = await this.prisma.roomMember.findUnique({
-      where: { roomId_userId: { roomId, userId } },
-    });
+    const [member, room] = await Promise.all([
+      this.prisma.roomMember.findUnique({ where: { roomId_userId: { roomId, userId } } }),
+      this.prisma.room.findUnique({
+        where: { id: roomId },
+        select: { coverImage: true, profileImage: true },
+      }),
+    ]);
 
     if (!member) {
       throw new NotFoundException('채팅방을 찾을 수 없습니다.');
@@ -298,6 +304,10 @@ export class RoomsService {
       throw new ForbiddenException('방장만 채팅방을 삭제할 수 있습니다.');
     }
 
+    await Promise.all([
+      this.media.deleteIfExists(room?.coverImage ?? null),
+      this.media.deleteIfExists(room?.profileImage ?? null),
+    ]);
     await this.prisma.room.delete({ where: { id: roomId } });
     // 상세 캐시 무효화 — 리스트는 TTL 만료로 처리 (방 삭제는 드문 이벤트)
     await this.cache.del(roomDetailKey(roomId));
