@@ -9,7 +9,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Logger, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { ChatService } from './chat.service';
@@ -54,6 +54,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
+  private readonly logger = new Logger(ChatGateway.name);
+
   constructor(
     private chatService: ChatService,
     // WsJwtGuard에서 JwtService를 사용하므로 Gateway에서 함께 주입한다
@@ -87,12 +89,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // 자신이 속한 방의 새 메시지 알림(room-list-updated)을 받을 수 있다.
       await client.join(`user:${payload.sub}`);
 
-      console.log(
-        `[Chat] 연결됨: userId=${payload.sub}, socketId=${client.id}`,
-      );
+      this.logger.log(`연결됨: userId=${payload.sub}, socketId=${client.id}`);
     } catch {
       // 인증 실패 시 연결을 즉시 끊는다
-      console.log(`[Chat] 인증 실패로 연결 해제: socketId=${client.id}`);
+      this.logger.warn(`인증 실패로 연결 해제: socketId=${client.id}`);
       client.disconnect();
     }
   }
@@ -103,9 +103,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * 별도로 룸에서 leave를 호출할 필요가 없다.
    */
   handleDisconnect(client: AuthenticatedSocket) {
-    console.log(
-      `[Chat] 연결 해제: userId=${client.data.user?.sub}, socketId=${client.id}`,
-    );
+    this.logger.log(`연결 해제: userId=${client.data.user?.sub}, socketId=${client.id}`);
   }
 
   /**
