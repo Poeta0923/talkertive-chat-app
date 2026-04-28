@@ -96,11 +96,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: {
     strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60, // 7일
   },
   // NestJS 백엔드와 JWT 형식을 공유하기 위해 jsonwebtoken으로 직접 인코딩/디코딩
   jwt: {
     encode: async ({ token, secret }) => {
-      return jwt.sign(token as jwt.JwtPayload, secret as string, { expiresIn: '7d' });
+      // NextAuth가 session.maxAge 기준으로 exp를 세팅한 뒤 호출하므로 expiresIn 옵션 불필요
+      return jwt.sign(token as jwt.JwtPayload, secret as string);
     },
     decode: async ({ token, secret }) => {
       try {
