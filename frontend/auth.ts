@@ -7,6 +7,27 @@ import { comparePassword } from "./lib/password-utils";
 import * as jwt from "jsonwebtoken";
 import { JWT } from "next-auth/jwt";
 
+// IP당 15분 내 5회 초과 시 차단 (단일 인스턴스 기준 — 다중 인스턴스라면 Redis로 교체 필요)
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function checkLoginRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+  if (!record || now > record.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    return true;
+  }
+  if (record.count >= MAX_LOGIN_ATTEMPTS) return false;
+  record.count++;
+  return true;
+}
+
+function resetLoginRateLimit(ip: string) {
+  loginAttempts.delete(ip);
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   useSecureCookies: process.env.NODE_ENV === "production",
   trustHost: true,
@@ -32,7 +53,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           type: "password",
         },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
+        const ip =
+          (request as Request | undefined)?.headers?.get('x-forwarded-for')?.split(',')[0].trim() ??
+          (request as Request | undefined)?.headers?.get('x-real-ip') ??
+          'unknown';
+
+        if (!checkLoginRateLimit(ip)) {
+          throw new Error('로그인 시도 횟수를 초과했습니다. 15분 후 다시 시도해주세요.');
+        }
+
         if (!credentials || !credentials.email || !credentials.password) {
           throw new Error("이메일과 비밀번호를 입력해주세요.");
         }
@@ -59,6 +89,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error(AUTH_ERROR);
         }
 
+        resetLoginRateLimit(ip);
         return user;
       },
     }),
