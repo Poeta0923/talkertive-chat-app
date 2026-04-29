@@ -113,7 +113,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     },
   },
-  pages: {},
+  pages: {
+    signIn: '/signin',
+  },
   callbacks: {
     async jwt({ token, user }) {
       // 최초 로그인 시 user 객체가 존재 — DB에서 가져온 role을 토큰에 저장
