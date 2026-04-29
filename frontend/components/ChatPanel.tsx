@@ -60,6 +60,7 @@ export default function ChatPanel({ room, currentUserId, onBack, onNavigateToRoo
   const [isMemberListOpen, setIsMemberListOpen] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [isKicking, setIsKicking] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const settingsTriggerRef = useRef<HTMLButtonElement>(null);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -126,8 +127,12 @@ export default function ChatPanel({ room, currentUserId, onBack, onNavigateToRoo
         socketRef.current = socket;
 
         socket.on('connect', () => {
+          setIsConnected(true);
           socket.emit('join-room', { roomId });
         });
+
+        socket.on('connect_error', () => setIsConnected(false));
+        socket.on('disconnect', () => setIsConnected(false));
 
         socket.on('room-joined', ({ messages: msgs }: { messages: Message[] }) => {
           const sorted = [...msgs].reverse();
@@ -576,6 +581,13 @@ export default function ChatPanel({ room, currentUserId, onBack, onNavigateToRoo
           onTransfer={handleTransferOwner}
           isLoading={isTransferring}
         />
+      )}
+
+      {/* 연결 끊김 배너 */}
+      {!isConnected && (
+        <div className="px-4 py-2 text-xs text-center bg-yellow-50 text-yellow-700 border-b border-yellow-200 shrink-0">
+          연결이 끊겼습니다. 재연결 중...
+        </div>
       )}
 
       {/* 메시지 목록 */}

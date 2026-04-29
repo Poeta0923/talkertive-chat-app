@@ -53,6 +53,7 @@ export default function ChatRoom({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [typingUserIds, setTypingUserIds] = useState<string[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -81,8 +82,12 @@ export default function ChatRoom({
     socketRef.current = socket;
 
     socket.on('connect', () => {
+      setIsConnected(true);
       socket.emit('join-room', { roomId });
     });
+
+    socket.on('connect_error', () => setIsConnected(false));
+    socket.on('disconnect', () => setIsConnected(false));
 
     socket.on('room-joined', ({ messages: msgs }: { messages: Message[] }) => {
       // 서버는 desc 순으로 반환하므로 뒤집어 오름차순으로 표시한다
@@ -205,6 +210,13 @@ export default function ChatRoom({
         </Link>
         <span className="font-semibold text-base truncate">{roomName}</span>
       </div>
+
+      {/* 연결 끊김 배너 */}
+      {!isConnected && (
+        <div className="px-4 py-2 text-xs text-center bg-yellow-50 text-yellow-700 border-b border-yellow-200 shrink-0">
+          연결이 끊겼습니다. 재연결 중...
+        </div>
+      )}
 
       {/* 메시지 목록 */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col">
