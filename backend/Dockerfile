@@ -7,11 +7,14 @@ RUN pnpm build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
-RUN npm i -g pnpm
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+ENV NODE_ENV=production
+# node_modules 전체를 복사 — prisma CLI가 devDependency라 prod 설치에서 누락되므로
+# builder의 전체 node_modules를 그대로 가져와 migrate deploy를 실행할 수 있게 한다
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/generated ./generated
 COPY prisma ./prisma
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x entrypoint.sh
 EXPOSE 8000
-CMD ["node", "dist/main.js"]
+ENTRYPOINT ["./entrypoint.sh"]
