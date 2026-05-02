@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN npm i -g pnpm && pnpm install --frozen-lockfile
 COPY . .
+RUN npx prisma generate
 RUN pnpm build
 
 FROM node:22-alpine AS runner
