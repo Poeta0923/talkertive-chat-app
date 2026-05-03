@@ -2,29 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { FcGoogle } from "react-icons/fc";
+import { signInWithCredentials } from "@/app/actions/auth-actions";
 
 export default function SignInPage() {
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        // 기본값은 에러 페이지로 리다이렉트하므로, 직접 에러를 핸들링하기 위해 비활성화
-        const result = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-        });
+        const result = await signInWithCredentials({ email, password });
 
-        if (result?.error) {
-            alert("아이디 또는 비밀번호를 확인해주세요.");
+        if (result.error) {
+            alert(result.error);
             return;
         }
 
-        window.location.href = '/';
+        router.push('/');
     }
 
     return (
