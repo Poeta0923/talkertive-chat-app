@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN npm i -g pnpm && pnpm install --frozen-lockfile
 COPY . .
+RUN npx prisma generate
 # NEXT_PUBLIC_* 변수는 빌드 타임에 JS 번들에 포함되므로 런타임 env 주입이 불가능하다
 # ECS 빌드 시 --build-arg NEXT_PUBLIC_API_URL=https://api.example.com 으로 전달해야 한다
 ARG NEXT_PUBLIC_API_URL
