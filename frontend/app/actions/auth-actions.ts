@@ -1,11 +1,30 @@
 'use server'
 
-import { signOut } from "@/auth";
+import { signIn, signOut } from "@/auth";
 import { saltAndHashPassword } from "@/lib/password-utils";
 import { prisma } from "@/prisma";
 
 export async function logout() {
   await signOut({ redirectTo: '/' });
+}
+
+export async function signInWithCredentials({ email, password }: { email: string; password: string }) {
+  try {
+    // 서버 액션에서 호출하는 signIn은 내부적으로 skipCSRFCheck를 사용하므로 MissingCSRF가 발생하지 않음
+    const url = (await signIn('credentials', {
+      email,
+      password,
+      redirect: false,
+      redirectTo: '/',
+    })) as string | undefined;
+
+    if (url && url.includes('error=')) {
+      return { error: '아이디 또는 비밀번호를 확인해주세요.' };
+    }
+    return {};
+  } catch {
+    return { error: '로그인 중 오류가 발생했습니다.' };
+  }
 }
 
 export async function signUp({

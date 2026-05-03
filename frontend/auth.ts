@@ -31,6 +31,19 @@ function resetLoginRateLimit(ip: string) {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   useSecureCookies: process.env.NODE_ENV === "production",
   trustHost: true,
+  // ALB → ECS 환경에서 useSecureCookies가 CSRF 쿠키에 __Host- 접두사를 붙이는데,
+  // __Host-는 프록시 경유 시 쿠키 불일치(MissingCSRF)를 유발하므로 명시적으로 접두사를 제거
+  cookies: {
+    csrfToken: {
+      name: 'authjs.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   // 커스텀 Prisma 출력 경로(generated/prisma)와 @auth/prisma-adapter가 기대하는 @prisma/client 타입 간 명목적 불일치 우회
   adapter: PrismaAdapter(prisma as any),
   secret: process.env.AUTH_SECRET,
