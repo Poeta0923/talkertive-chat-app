@@ -93,32 +93,21 @@
 
 ## 🏗️ 아키텍처
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                        Client (Browser)                          │
-│   Next.js 15 App Router  ·  Socket.io-client  ·  TanStack Query │
-└───────────────────────┬─────────────────────────────────────────┘
-                        │ HTTPS / WSS
-          ┌─────────────┴──────────────┐
-          │                            │
-  ┌───────▼──────┐            ┌────────▼────────┐
-  │  NextAuth v5  │            │   NestJS API     │
-  │  (JWT 발급)   │            │   (JWT 검증)     │
-  │  /api/auth/*  │            │   :8000          │
-  └───────┬───────┘            │                  │
-          │ shared AUTH_SECRET │  REST + WS(/chat)│
-          └────────────────────┘                  │
-                                        ┌──────────┴───────────┐
-                                        │                      │
-                                  ┌─────▼──────┐       ┌──────▼──────┐
-                                  │ PostgreSQL  │       │   Redis      │
-                                  │  (Prisma)   │       │  (캐시)      │
-                                  └─────────────┘       └─────────────┘
-                                                                │
-                                                        ┌───────▼──────┐
-                                                        │   AWS S3      │
-                                                        │ (이미지/파일) │
-                                                        └──────────────┘
+```mermaid
+graph TD
+    Client["Client (Browser)\nNext.js 15 App Router · Socket.io-client · TanStack Query"]
+
+    Client -->|HTTPS / WSS| NextAuth
+    Client -->|HTTPS / WSS| NestJS
+
+    NextAuth["NextAuth v5\n(JWT 발급)\n/api/auth/*"]
+    NestJS["NestJS API\n(JWT 검증)\n:8000\nREST + WS(/chat)"]
+
+    NextAuth <-->|shared AUTH_SECRET| NestJS
+
+    NestJS --> PostgreSQL["PostgreSQL\n(Prisma)"]
+    NestJS --> Redis["Redis\n(캐시)"]
+    NestJS --> S3["AWS S3\n(이미지/파일)"]
 ```
 
 ### 인증 흐름
