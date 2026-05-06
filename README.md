@@ -10,6 +10,12 @@
 
 ---
 
+## 🏗️ 아키텍처
+
+![architecture](docs/images/architecture.png)
+
+<br />
+
 ## 🖼️ 스크린샷
 
 | 홈 화면 | 채팅 화면 |
@@ -83,33 +89,6 @@
 |---|---|
 | Container | Docker, Docker Compose |
 | CI/CD | GitHub Actions |
-
----
-
-## 🏗️ 아키텍처
-
-```mermaid
-graph TD
-    Client["Client (Browser)\nNext.js 15 App Router · Socket.io-client · TanStack Query"]
-
-    Client -->|HTTPS / WSS| NextAuth
-    Client -->|HTTPS / WSS| NestJS
-
-    NextAuth["NextAuth v5\n(JWT 발급)\n/api/auth/*"]
-    NestJS["NestJS API\n(JWT 검증)\n:8000\nREST + WS(/chat)"]
-
-    NextAuth <-->|shared AUTH_SECRET| NestJS
-
-    NestJS --> PostgreSQL["PostgreSQL\n(Prisma)"]
-    NestJS --> Redis["Redis\n(캐시)"]
-    NestJS --> S3["AWS S3\n(이미지/파일)"]
-```
-
-### 인증 흐름
-1. 프론트엔드에서 NextAuth가 JWT를 발급하고 쿠키(`authjs.session-token`)에 저장
-2. API 요청 시 쿠키에서 토큰을 꺼내 `Authorization: Bearer` 헤더로 전달
-3. NestJS의 Passport JWT 전략이 동일한 `AUTH_SECRET`으로 토큰을 검증
-4. WebSocket 연결 시에도 handshake 시점에 `WsJwtGuard`가 토큰을 검증
 
 ---
 
