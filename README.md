@@ -1,20 +1,16 @@
 # Talkertive
 
-> 관심사 기반 모임을 만들고, 실시간으로 소통하는 채팅/모임 플랫폼
+> 관심사 기반 모임을 만들고, 실시간으로 소통하는 채팅·모임 플랫폼
 
-<br />
+---
 
-## 📌 프로젝트 소개
+## 📌 프로젝트 한 줄 요약
 
-**Talkertive**는 같은 관심사를 가진 사람들이 모임을 개설하고, 실시간 채팅으로 소통할 수 있는 풀스택 웹 애플리케이션입니다.
+관심사가 같은 사람들이 모임을 개설하고, **실시간 채팅·일정 관리·AI 자연어 입력**으로 소통할 수 있는 풀스택 웹 애플리케이션
 
-그룹 모임 생성부터 1:1 다이렉트 채팅, 일정 관리(AI 자연어 입력 지원), 파일 첨부, 관리자 대시보드까지 다양한 기능을 처음부터 직접 설계하고 구현한 사이드 프로젝트입니다.
-
-<br />
+---
 
 ## 🖼️ 스크린샷
-
-> 아래 경로에 스크린샷을 추가해주세요.
 
 | 홈 화면 | 채팅 화면 |
 |:---:|:---:|
@@ -24,7 +20,7 @@
 |:---:|:---:|
 | ![room-detail](docs/images/room-detail.png) | ![admin](docs/images/admin-dashboard.png) |
 
-<br />
+---
 
 ## ✨ 주요 기능
 
@@ -36,12 +32,12 @@
 ### 모임 (Group Room)
 - 스터디, 스포츠, 음식, 여행 등 **8가지 카테고리**의 모임 개설 및 탐색
 - 커버 이미지, 제목, 한줄 소개, 날짜/장소, 인원 제한 등 상세 설정
-- 좋아요 및 멤버 초대, OWNER 권한 양도, 멤버 관리
+- 좋아요, 멤버 초대, OWNER 권한 양도, 멤버 관리
 
 ### 실시간 채팅 (WebSocket)
 - **Socket.io** 기반 실시간 메시지 송수신
 - 메시지 수정/삭제(소프트 딜리트), 읽음 처리, 타이핑 인디케이터
-- 파일·이미지 첨부(AWS S3 업로드)
+- 파일·이미지 첨부 (AWS S3 업로드)
 - 1:1 다이렉트 채팅 및 그룹 채팅 모두 지원
 
 ### AI 일정 관리
@@ -53,7 +49,7 @@
 - 회원·모임 목록 조회, 검색/필터, 강제 삭제
 - 홈 배너 등록·삭제
 
-<br />
+---
 
 ## 🛠️ 기술 스택
 
@@ -86,10 +82,9 @@
 | 분류 | 기술 |
 |---|---|
 | Container | Docker, Docker Compose |
-| DB (Local) | PostgreSQL (docker-compose) |
 | CI/CD | GitHub Actions |
 
-<br />
+---
 
 ## 🏗️ 아키텍처
 
@@ -116,7 +111,7 @@ graph TD
 3. NestJS의 Passport JWT 전략이 동일한 `AUTH_SECRET`으로 토큰을 검증
 4. WebSocket 연결 시에도 handshake 시점에 `WsJwtGuard`가 토큰을 검증
 
-<br />
+---
 
 ## 📁 프로젝트 구조
 
@@ -131,9 +126,8 @@ talkertive-chat-app/
 │   │   │   ├── rooms/         # 모임 생성·상세
 │   │   │   └── mypage/        # 프로필·내 모임
 │   │   └── (admin)/           # 관리자 패널
-│   ├── components/            # 공유 컴포넌트 (21+)
+│   ├── components/            # 공유 컴포넌트
 │   ├── hooks/                 # 커스텀 React 훅
-│   ├── lib/                   # 유틸리티
 │   ├── generated/openapi-client/ # 자동 생성 API 클라이언트
 │   └── prisma/                # 스키마 + 마이그레이션
 │
@@ -146,12 +140,11 @@ talkertive-chat-app/
         ├── schedules/         # 일정 관리 + AI 처리
         ├── admin/             # 관리자 통계·관리 API
         ├── media/             # S3 파일 업로드
-        ├── banner/            # 배너 API
         ├── users/             # 유저 프로필 API
         └── health/            # 헬스체크 (DB + Redis)
 ```
 
-<br />
+---
 
 ## 🗄️ 도메인 모델
 
@@ -169,10 +162,10 @@ User ──── Account (OAuth)
 ```
 
 - `Room`: `DIRECT`(1:1) / `GROUP`(모임)을 단일 테이블로 관리
-- `RoomMember`: `leftAt`이 null이면 현재 참여 중 (소프트 딜리트)
+- `RoomMember`: `leftAt` null이면 현재 참여 중 (소프트 딜리트)
 - `Message`: `deletedAt`으로 소프트 딜리트
 
-<br />
+---
 
 ## ⚡ WebSocket 이벤트
 
@@ -185,63 +178,75 @@ User ──── Account (OAuth)
 | `read-message { roomId, lastMessageId }` | `message-read` | 읽음 처리 |
 | `typing { roomId, isTyping }` | `user-typing` | 타이핑 인디케이터 |
 
-<br />
+---
+
+## 🚨 트러블슈팅 및 설계 고민
+
+### 1) NextAuth ↔ NestJS 토큰 공유
+
+- **문제**: NextAuth가 발급한 JWT를 NestJS에서 그대로 쓰려면 토큰 형식이 동일해야 하는데, NextAuth의 기본 인코딩 방식이 NestJS의 Passport-JWT와 맞지 않음
+- **해결**: NextAuth의 `encode` / `decode`를 `jsonwebtoken`으로 직접 오버라이드해 HS256 방식을 통일하고, `AUTH_SECRET`을 양쪽이 공유. 별도 토큰 발급 엔드포인트 없이 인증 단일화
+
+### 2) WebSocket 인증
+
+- **문제**: HTTP Passport 미들웨어는 WebSocket handshake에 자동 적용되지 않아 채팅 연결이 인증 없이 가능한 상태
+- **해결**: `WsJwtGuard`를 직접 구현해 handshake 시점에 토큰을 검증하고 `socket.data.user`에 payload를 주입. HTTP/WS 모두 동일한 인증 흐름으로 통일
+
+### 3) AI 일정 처리의 모호성
+
+- **문제**: "다음 주 토요일"처럼 상대적 날짜 표현을 Claude API에 그대로 전달하면 기준 시점이 불분명해 잘못된 날짜를 생성
+- **해결**: 시스템 프롬프트에 현재 날짜·시간·요일을 명시적으로 포함. structured output으로 `create / update / cancel` 액션을 반환받아 Prisma로 처리
+
+### 4) 프론트엔드 타입 동기화
+
+- **문제**: 백엔드 API가 변경될 때마다 프론트엔드 fetch 코드와 타입을 수동으로 맞춰야 하는 비용
+- **해결**: `@hey-api/openapi-ts`로 백엔드 Swagger 스펙에서 타입 안전한 API 클라이언트를 자동 생성. `npx openapi-ts` 한 번으로 프론트엔드 타입 전체 동기화
+
+---
+
+## 🧠 설계 의도
+
+- **단일 `Room` 테이블**로 DIRECT/GROUP 두 타입을 관리해 관계 복잡도를 줄이고, 내 채팅방 목록 조회를 단일 쿼리로 처리
+- **소프트 딜리트** 방식으로 메시지·멤버를 관리해 히스토리 보존과 읽음 처리 정합성을 동시에 확보
+- **OpenAPI 자동 생성 클라이언트**로 백엔드·프론트엔드 타입을 스키마 기준으로 단일 관리
+
+---
+
+## 🎯 이 프로젝트로 보여주고 싶은 역량
+
+- Next.js App Router와 NestJS를 실제로 연결하는 **풀스택 설계** 능력
+- HTTP와 WebSocket 모두 동일한 JWT 인증 흐름으로 처리하는 **인증 설계** 이해
+- AI API를 기능에 자연스럽게 녹여내는 **실용적 AI 통합** 경험
+- 기능 단위가 아닌 도메인 기준으로 DB와 API를 설계하는 **도메인 모델링** 사고
+
+---
 
 ## 🚀 로컬 실행
 
 ### 사전 요구사항
-- Node.js 20+
-- pnpm
-- Docker (PostgreSQL·Redis 컨테이너 실행용)
+- Node.js 20+, pnpm, Docker
 
-### 1. 저장소 클론
-
-```bash
-git clone https://github.com/your-username/talkertive-chat-app.git
-cd talkertive-chat-app
-```
-
-### 2. 백엔드 실행
+### 백엔드
 
 ```bash
 cd backend
-
-# 환경변수 설정
-cp .env.example .env
-# .env 파일을 열어 DATABASE_URL, AUTH_SECRET 등 설정
-
-# PostgreSQL 컨테이너 시작
-docker compose up -d
-
-# 의존성 설치 및 DB 마이그레이션
+cp .env.example .env       # 환경변수 설정
+docker compose up -d        # PostgreSQL 컨테이너 시작
 pnpm install
 npx prisma migrate dev
-npx prisma generate
-
-# 개발 서버 시작
-pnpm start:dev
-# → http://localhost:8000
-# → Swagger: http://localhost:8000/docs
+pnpm start:dev              # http://localhost:8000 · Swagger: /docs
 ```
 
-### 3. 프론트엔드 실행
+### 프론트엔드
 
 ```bash
 cd frontend
-
-# 환경변수 설정
-cp .env.local.example .env.local
-# .env.local 파일을 열어 AUTH_SECRET, NEXT_PUBLIC_API_URL 등 설정
-
-# 의존성 설치
+cp .env.local.example .env.local   # 환경변수 설정
 pnpm install
-
-# 개발 서버 시작
-pnpm dev
-# → http://localhost:3000
+pnpm dev                            # http://localhost:3000
 ```
 
-<br />
+---
 
 ## 🔑 환경변수
 
@@ -249,20 +254,13 @@ pnpm dev
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/talkertive
+AUTH_SECRET=your-secret-key        # NextAuth와 반드시 동일
 
-# NextAuth와 반드시 동일한 값
-AUTH_SECRET=your-secret-key
-
-# AWS S3
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_REGION=
 AWS_S3_BUCKET=
 
-# Sentry (optional)
-SENTRY_DSN=
-
-# Docker Compose
 POSTGRES_USER=user
 POSTGRES_PASSWORD=password
 POSTGRES_DB=talkertive
@@ -271,34 +269,13 @@ POSTGRES_DB=talkertive
 ### Frontend (`frontend/.env.local`)
 
 ```env
-# NextAuth와 백엔드가 공유하는 비밀키
-AUTH_SECRET=your-secret-key
-
-# 백엔드 URL
+AUTH_SECRET=your-secret-key        # 백엔드와 동일한 값
 NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# Google OAuth (optional)
 AUTH_GOOGLE_ID=
 AUTH_GOOGLE_SECRET=
 ```
 
-<br />
-
-## 🗒️ 구현 시 고민한 점
-
-**1. NextAuth ↔ NestJS 토큰 공유**  
-NextAuth가 발급한 JWT를 NestJS에서 그대로 검증할 수 있도록, `jsonwebtoken`으로 인코딩/디코딩 방식을 직접 제어하고 `AUTH_SECRET`을 양쪽이 공유하는 구조로 설계했습니다. 별도 토큰 발급 엔드포인트 없이 인증 단일화가 가능합니다.
-
-**2. WebSocket 인증**  
-HTTP Passport 미들웨어는 WebSocket handshake에 적용되지 않아, `WsJwtGuard`를 직접 구현해 handshake 시점에 토큰을 검증하고 `socket.data.user`에 payload를 주입하는 방식으로 처리했습니다.
-
-**3. AI 일정 처리**  
-Claude API에 현재 일정 목록과 사용자 입력을 함께 전달하고, structured output으로 `create / update / cancel` 액션을 반환받아 Prisma로 처리합니다. 자연어 입력의 모호성을 줄이기 위해 현재 날짜·시간 컨텍스트를 시스템 프롬프트에 포함했습니다.
-
-**4. OpenAPI 자동 생성 클라이언트**  
-백엔드 Swagger 스펙에서 `@hey-api/openapi-ts`로 타입 안전한 API 클라이언트를 자동 생성합니다. 수동 fetch 래퍼 없이 타입 추론이 가능하고, 스키마 변경 시 재생성 한 번으로 프론트엔드 타입이 동기화됩니다.
-
-<br />
+---
 
 ## 📄 라이선스
 
