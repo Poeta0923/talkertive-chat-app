@@ -10,11 +10,11 @@
 
 ---
 
-## 🏗️ 아키텍처
+## 🔗 프로젝트 링크
 
-![architecture](docs/images/architecture.png)
+https://talkertive.co.kr/
 
-<br />
+---
 
 ## 🖼️ 스크린샷
 
