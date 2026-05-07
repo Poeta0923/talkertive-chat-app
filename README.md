@@ -16,6 +16,12 @@ https://talkertive.co.kr/
 
 ---
 
+## 🏗️ 아키텍처
+
+![architecture](docs/images/architecture.png)
+
+---
+
 ## 🖼️ 스크린샷
 
 | 홈 화면 | 채팅 화면 |
