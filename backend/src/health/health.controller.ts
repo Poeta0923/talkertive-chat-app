@@ -43,14 +43,30 @@ export class HealthController {
 
   private async checkRedis(): Promise<HealthIndicatorResult> {
     const PROBE_KEY = 'health:ping';
+    // Redis는 캐싱 용도라 장애여도 앱은 DB로 fallback되어 동작한다
+    // ALB가 503으로 Task를 죽이지 않도록 Redis 상태는 항상 up으로 반환하고
+    // 실제 상태는 message로 노출한다 (CloudWatch 로그/모니터링에서 추적)
+    // ElastiCache TLS hang 방지로 3초 타임아웃 적용
+    const TIMEOUT_MS = 3_000;
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Redis health check timeout')), TIMEOUT_MS),
+    );
+
     try {
-      await this.cache.set(PROBE_KEY, '1', 5_000);
-      const val = await this.cache.get(PROBE_KEY);
-      if (val !== '1') throw new Error('Redis read-back mismatch');
-      await this.cache.del(PROBE_KEY);
+      await Promise.race([
+        (async () => {
+          await this.cache.set(PROBE_KEY, '1', 5_000);
+          const val = await this.cache.get(PROBE_KEY);
+          if (val !== '1') throw new Error('Redis read-back mismatch');
+          await this.cache.del(PROBE_KEY);
+        })(),
+        timeout,
+      ]);
       return { redis: { status: 'up' } };
     } catch (err) {
-      return { redis: { status: 'down', message: (err as Error).message } };
+      return {
+        redis: { status: 'up', degraded: true, message: (err as Error).message },
+      };
     }
   }
 }
