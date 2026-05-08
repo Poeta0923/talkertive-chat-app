@@ -175,25 +175,25 @@ jobs:
       - name: ECS 백엔드 배포
         run: |
           aws ecs update-service \
-            --cluster talkertive \
+            --cluster talkertive-cluster \
             --service talkertive-backend-service \
             --force-new-deployment
 
       - name: ECS 프론트엔드 배포
         run: |
           aws ecs update-service \
-            --cluster talkertive \
+            --cluster talkertive-cluster \
             --service talkertive-frontend-service \
             --force-new-deployment
 
       - name: 배포 완료 대기 (백엔드)
         run: |
           aws ecs wait services-stable \
-            --cluster talkertive \
+            --cluster talkertive-cluster \
             --services talkertive-backend-service
 
       - name: 배포 완료 대기 (프론트엔드)
         run: |
           aws ecs wait services-stable \
-            --cluster talkertive \
+            --cluster talkertive-cluster \
             --services talkertive-frontend-service
