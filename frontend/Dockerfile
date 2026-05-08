@@ -1,7 +1,7 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN npm i -g pnpm && pnpm install --frozen-lockfile
+RUN npm i -g pnpm && pnpm install --frozen-lockfile --ignore-scripts
 COPY . .
 RUN npx prisma generate
 # NEXT_PUBLIC_* 변수는 빌드 타임에 JS 번들에 포함되므로 런타임 env 주입이 불가능하다
