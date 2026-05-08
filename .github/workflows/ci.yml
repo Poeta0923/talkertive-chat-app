@@ -116,3 +116,84 @@ jobs:
           AUTH_GOOGLE_ID: ci-google-id
           AUTH_GOOGLE_SECRET: ci-google-secret
           API_URL: http://localhost:8000
+
+  # ────────────────────────────────────────────
+  # CD: Docker 이미지 빌드 → ECR 푸시 → ECS 배포
+  # main 브랜치 push 시에만 실행 (PR 제외)
+  # ────────────────────────────────────────────
+  deploy:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.event_name == 'push'
+    permissions:
+      id-token: write   # OIDC 토큰 요청에 필요
+      contents: read
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: AWS 자격증명 설정 (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
+      - name: ECR 로그인
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 이미지 태그 설정
+        run: echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: 백엔드 이미지 빌드 & ECR 푸시
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build \
+            --platform linux/amd64 \
+            -t $ECR_REGISTRY/talkertive/backend:$IMAGE_TAG \
+            -t $ECR_REGISTRY/talkertive/backend:latest \
+            ./backend
+          docker push $ECR_REGISTRY/talkertive/backend:$IMAGE_TAG
+          docker push $ECR_REGISTRY/talkertive/backend:latest
+
+      - name: 프론트엔드 이미지 빌드 & ECR 푸시
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build \
+            --platform linux/amd64 \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            -t $ECR_REGISTRY/talkertive/frontend:$IMAGE_TAG \
+            -t $ECR_REGISTRY/talkertive/frontend:latest \
+            ./frontend
+          docker push $ECR_REGISTRY/talkertive/frontend:$IMAGE_TAG
+          docker push $ECR_REGISTRY/talkertive/frontend:latest
+
+      - name: ECS 백엔드 배포
+        run: |
+          aws ecs update-service \
+            --cluster talkertive \
+            --service talkertive-backend-service \
+            --force-new-deployment
+
+      - name: ECS 프론트엔드 배포
+        run: |
+          aws ecs update-service \
+            --cluster talkertive \
+            --service talkertive-frontend-service \
+            --force-new-deployment
+
+      - name: 배포 완료 대기 (백엔드)
+        run: |
+          aws ecs wait services-stable \
+            --cluster talkertive \
+            --services talkertive-backend-service
+
+      - name: 배포 완료 대기 (프론트엔드)
+        run: |
+          aws ecs wait services-stable \
+            --cluster talkertive \
+            --services talkertive-frontend-service
