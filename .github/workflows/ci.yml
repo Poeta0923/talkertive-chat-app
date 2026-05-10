@@ -153,8 +153,10 @@ jobs:
             s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/prometheus.prod.yml
           aws s3 cp monitoring/loki/loki-config.yml \
             s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/loki-config.yml
-          aws s3 sync monitoring/grafana/provisioning/ \
-            s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/grafana/provisioning/
+          aws s3 cp monitoring/grafana/provisioning/datasources/datasources.yml \
+            s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/grafana/provisioning/datasources/datasources.yml
+          aws s3 cp monitoring/grafana/provisioning/dashboards/dashboards.yml \
+            s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/grafana/provisioning/dashboards/dashboards.yml
 
       - name: 백엔드 이미지 빌드 & ECR 푸시
         env:
