@@ -12,6 +12,7 @@ import {
 import { Logger, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
+import { getOrCreateHistogram } from '../metrics/metrics.helper';
 import { ChatService } from './chat.service';
 import { WsJwtGuard } from './ws-jwt.guard';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -55,6 +56,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server!: Server;
 
   private readonly logger = new Logger(ChatGateway.name);
+
+  private readonly wsHistogram = getOrCreateHistogram({
+    name: 'ws_event_duration_seconds',
+    help: 'WebSocket 이벤트 핸들러 소요 시간 (초)',
+    labelNames: ['event'],
+    buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5],
+  });
 
   constructor(
     private chatService: ChatService,
@@ -121,6 +129,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { roomId: string },
   ) {
+    const timer = this.wsHistogram.startTimer({ event: 'join-room' });
     const userId = client.data.user.sub as string;
     const { roomId } = data;
 
@@ -131,6 +140,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // 입장한 사용자의 최근 메시지 50개를 응답으로 돌려준다
     const messages = await this.chatService.getMessages(userId, roomId);
 
+    timer();
     // NestJS WebSocket 응답 포맷: { event, data } — data 키에 담아야 클라이언트에 올바르게 전달된다
     return { event: 'room-joined', data: { messages } };
   }
@@ -146,7 +156,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { roomId: string },
   ) {
+    const timer = this.wsHistogram.startTimer({ event: 'leave-room' });
     void client.leave(`room:${data.roomId}`);
+    timer();
     return { event: 'room-left', data: {} };
   }
 
@@ -161,6 +173,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: SendMessageDto,
   ) {
+    const timer = this.wsHistogram.startTimer({ event: 'send-message' });
     const userId = client.data.user.sub as string;
 
     const message = await this.chatService.sendMessage(userId, dto);
@@ -189,6 +202,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         .emit('room-list-updated', roomListPayload);
     }
 
+    timer();
     return { event: 'message-sent', data: { message } };
   }
 
@@ -203,12 +217,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: EditMessageDto,
   ) {
+    const timer = this.wsHistogram.startTimer({ event: 'edit-message' });
     const userId = client.data.user.sub as string;
 
     const message = await this.chatService.editMessage(userId, dto);
 
     this.server.to(`room:${message.roomId}`).emit('message-edited', message);
 
+    timer();
     return { event: 'message-edit-success', data: { message } };
   }
 
@@ -224,6 +240,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: DeleteMessageDto,
   ) {
+    const timer = this.wsHistogram.startTimer({ event: 'delete-message' });
     const userId = client.data.user.sub as string;
 
     const message = await this.chatService.deleteMessage(userId, dto);
@@ -234,6 +251,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       roomId: message.roomId,
     });
 
+    timer();
     return { event: 'message-delete-success', data: {} };
   }
 
@@ -249,6 +267,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: ReadMessageDto,
   ) {
+    const timer = this.wsHistogram.startTimer({ event: 'read-message' });
     const userId = client.data.user.sub as string;
 
     await this.chatService.markAsRead(userId, dto);
@@ -260,6 +279,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       lastMessageId: dto.lastMessageId,
     });
 
+    timer();
     return { event: 'read-success', data: {} };
   }
 
@@ -275,6 +295,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { roomId: string; isTyping: boolean },
   ) {
+    const timer = this.wsHistogram.startTimer({ event: 'typing' });
     const userId = client.data.user.sub as string;
 
     // client.to — 발신자를 제외하고 브로드캐스트
@@ -282,5 +303,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       userId,
       isTyping: data.isTyping,
     });
+    timer();
   }
 }
