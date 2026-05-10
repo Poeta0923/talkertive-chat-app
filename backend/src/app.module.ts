@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { WinstonModule } from 'nest-winston';
 import { AuthModule } from './auth/auth.module';
@@ -19,6 +19,8 @@ import { UsersModule } from './users/users.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { HealthModule } from './health/health.module';
 import { AdminModule } from './admin/admin.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { MetricsInterceptor } from './metrics/metrics.interceptor';
 import { createWinstonOptions } from './common/logger/winston.config';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { HttpLoggingMiddleware } from './common/middleware/http-logging.middleware';
@@ -53,6 +55,7 @@ import { HttpLoggingMiddleware } from './common/middleware/http-logging.middlewa
     SchedulesModule,
     HealthModule,
     AdminModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -61,6 +64,8 @@ import { HttpLoggingMiddleware } from './common/middleware/http-logging.middlewa
     { provide: APP_FILTER, useClass: SentryGlobalFilter },
     // ThrottlerGuard를 전역 가드로 등록 — 모든 HTTP 엔드포인트에 자동 적용
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // 모든 HTTP 요청의 성공/실패 응답시간을 Prometheus Histogram으로 수집
+    { provide: APP_INTERCEPTOR, useClass: MetricsInterceptor },
   ],
 })
 export class AppModule implements NestModule {
