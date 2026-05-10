@@ -9,6 +9,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { randomBytes } from 'crypto';
 import slugify from 'slugify';
+import { getOrCreateCounter, getOrCreateHistogram } from 'src/metrics/metrics.helper';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateGroupRoomDto } from './dto/create-group-room.dto';
 import { CreateDirectRoomDto } from './dto/create-direct-room.dto';
@@ -36,6 +37,23 @@ const ROOM_DETAIL_TTL_MS = 120_000; // 2분 — 수정/삭제 시 명시적 무�
 
 @Injectable()
 export class RoomsService {
+  private readonly cacheHistogram = getOrCreateHistogram({
+    name: 'cache_operation_duration_seconds',
+    help: 'Redis 캐시 작업 소요 시간 (초)',
+    labelNames: ['operation'],
+    buckets: [0.0005, 0.001, 0.005, 0.01, 0.05],
+  });
+  private readonly cacheHitCounter = getOrCreateCounter({
+    name: 'cache_hit_total',
+    help: '캐시 히트 수',
+    labelNames: ['key_prefix'],
+  });
+  private readonly cacheMissCounter = getOrCreateCounter({
+    name: 'cache_miss_total',
+    help: '캐시 미스 수',
+    labelNames: ['key_prefix'],
+  });
+
   constructor(
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cache: Cache,
@@ -112,8 +130,14 @@ export class RoomsService {
    */
   async findOneGroupRoom(roomId: string) {
     const cacheKey = roomDetailKey(roomId);
+    const getTimer = this.cacheHistogram.startTimer({ operation: 'get' });
     const cached = await this.cache.get(cacheKey);
-    if (cached) return cached;
+    getTimer();
+    if (cached) {
+      this.cacheHitCounter.inc({ key_prefix: 'room_detail' });
+      return cached;
+    }
+    this.cacheMissCounter.inc({ key_prefix: 'room_detail' });
 
     const room = await this.prisma.room.findUnique({
       where: { id: roomId, type: RoomType.GROUP },
@@ -150,8 +174,14 @@ export class RoomsService {
     const { skip, take, cursor, where, orderBy, search, category } = params;
     const cacheKey = roomListKey({ skip, take, search, category });
 
+    const getTimer = this.cacheHistogram.startTimer({ operation: 'get' });
     const cached = await this.cache.get(cacheKey);
-    if (cached) return cached;
+    getTimer();
+    if (cached) {
+      this.cacheHitCounter.inc({ key_prefix: 'room_list' });
+      return cached;
+    }
+    this.cacheMissCounter.inc({ key_prefix: 'room_list' });
 
     const result = await this.prisma.room.findMany({
       skip,

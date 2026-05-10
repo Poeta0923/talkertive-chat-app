@@ -9,6 +9,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { getOrCreateHistogram } from '../metrics/metrics.helper';
 import { PrismaService } from '../prisma/prisma.service';
 import { v4 as uuid } from 'uuid';
 
@@ -16,6 +17,12 @@ import { v4 as uuid } from 'uuid';
 export class MediaService {
   private s3Client: S3Client;
   private cloudFrontDomain: string;
+  private readonly s3Histogram = getOrCreateHistogram({
+    name: 's3_operation_duration_seconds',
+    help: 'S3 API 작업 소요 시간 (초)',
+    labelNames: ['operation'],
+    buckets: [0.05, 0.1, 0.5, 1, 3, 5, 10],
+  });
 
   constructor(private readonly prisma: PrismaService) {
     this.s3Client = new S3Client({
@@ -38,6 +45,7 @@ export class MediaService {
     file: Express.Multer.File,
     key: string,
   ): Promise<string> {
+    const timer = this.s3Histogram.startTimer({ operation: 'put' });
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: process.env.AWS_MEDIA_S3_BUCKET_NAME,
@@ -46,6 +54,7 @@ export class MediaService {
         ContentType: file.mimetype,
       }),
     );
+    timer();
     return this.getMediaUrl(key);
   }
 
@@ -65,12 +74,14 @@ export class MediaService {
   async deleteIfExists(url: string | null) {
     if (!url || !url.startsWith(`https://${this.cloudFrontDomain}/`)) return;
     const key = url.replace(`https://${this.cloudFrontDomain}/`, '');
+    const timer = this.s3Histogram.startTimer({ operation: 'delete' });
     await this.s3Client.send(
       new DeleteObjectCommand({
         Bucket: process.env.AWS_MEDIA_S3_BUCKET_NAME,
         Key: key,
       }),
     );
+    timer();
   }
 
   /**
