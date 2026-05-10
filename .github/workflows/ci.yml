@@ -147,6 +147,15 @@ jobs:
       - name: 이미지 태그 설정
         run: echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
 
+      - name: 모니터링 설정 파일 S3 업로드
+        run: |
+          aws s3 cp monitoring/prometheus/prometheus.prod.yml \
+            s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/prometheus.prod.yml
+          aws s3 cp monitoring/loki/loki-config.yml \
+            s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/loki-config.yml
+          aws s3 sync monitoring/grafana/provisioning/ \
+            s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/grafana/provisioning/
+
       - name: 백엔드 이미지 빌드 & ECR 푸시
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}

@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: talkertive-backend
+    metrics_path: /metrics
+    static_configs:
+      # ECS Service Connect 내부 DNS — 백엔드 서비스 이름과 일치해야 함
+      - targets: ['backend:8000']
