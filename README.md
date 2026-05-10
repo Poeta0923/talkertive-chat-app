@@ -87,7 +87,8 @@ https://talkertive.co.kr/
 | Cache | Redis (cache-manager + Keyv) |
 | Storage | AWS S3 (이미지/파일 업로드) |
 | AI | Claude API (@anthropic-ai/sdk) |
-| Monitoring | Sentry, Winston 로깅 |
+| Monitoring | Sentry, Winston 로깅, Prometheus 메트릭 (`@willsoto/nestjs-prometheus`) |
+| Logging | winston-loki (Loki 로그 전송) |
 | Docs | Swagger / OpenAPI |
 
 ### Infrastructure
@@ -95,6 +96,10 @@ https://talkertive.co.kr/
 |---|---|
 | Container | Docker, Docker Compose |
 | CI/CD | GitHub Actions |
+| Hosting | AWS ECS (Fargate), ALB, ECR |
+| Storage | RDS (PostgreSQL), ElastiCache (Redis), EFS, S3 |
+| Service Discovery | AWS Cloud Map (`talkertive.local`) |
+| Observability | Prometheus + Loki + Grafana (ECS 배포, ALB `/grafana` 경로 노출) |
 
 ---
 
@@ -116,17 +121,23 @@ talkertive-chat-app/
 │   ├── generated/openapi-client/ # 자동 생성 API 클라이언트
 │   └── prisma/                # 스키마 + 마이그레이션
 │
-└── backend/                   # NestJS API (포트 8000)
-    └── src/
-        ├── auth/              # Passport JWT 전략·가드
-        ├── rooms/             # 모임 REST API
-        ├── room-members/      # 멤버 관리 API
-        ├── chat/              # WebSocket 채팅 게이트웨이
-        ├── schedules/         # 일정 관리 + AI 처리
-        ├── admin/             # 관리자 통계·관리 API
-        ├── media/             # S3 파일 업로드
-        ├── users/             # 유저 프로필 API
-        └── health/            # 헬스체크 (DB + Redis)
+├── backend/                   # NestJS API (포트 8000)
+│   └── src/
+│       ├── auth/              # Passport JWT 전략·가드
+│       ├── rooms/             # 모임 REST API
+│       ├── room-members/      # 멤버 관리 API
+│       ├── chat/              # WebSocket 채팅 게이트웨이
+│       ├── schedules/         # 일정 관리 + AI 처리
+│       ├── admin/             # 관리자 통계·관리 API
+│       ├── media/             # S3 파일 업로드
+│       ├── users/             # 유저 프로필 API
+│       ├── metrics/           # Prometheus 메트릭 + 글로벌 인터셉터
+│       └── health/            # 헬스체크 (DB + Redis)
+│
+└── monitoring/                # 모니터링 스택 설정 (ECS·로컬 공용)
+    ├── prometheus/            # prometheus.yml (로컬), prometheus.prod.yml (ECS)
+    ├── loki/                  # loki-config.yml
+    └── grafana/provisioning/  # 데이터소스·대시보드 자동 등록
 ```
 
 ---
@@ -231,6 +242,21 @@ pnpm install
 pnpm dev                            # http://localhost:3000
 ```
 
+### 모니터링 스택
+
+로컬에서 Prometheus + Loki + Grafana를 함께 실행하려면:
+
+```bash
+# 루트 디렉토리에서
+docker compose -f docker-compose.monitoring.yml up -d
+```
+
+- Grafana: http://localhost:3001 (admin/admin) — Prometheus·Loki 데이터소스 자동 등록
+- Prometheus: http://localhost:9090
+- Loki: http://localhost:3100/ready
+
+백엔드 `.env`에 `LOKI_HOST=http://localhost:3100`을 추가하면 NestJS 로그가 Loki로 전송됩니다.
+
 ---
 
 ## 🔑 환경변수
@@ -249,6 +275,8 @@ AWS_S3_BUCKET=
 POSTGRES_USER=user
 POSTGRES_PASSWORD=password
 POSTGRES_DB=talkertive
+
+LOKI_HOST=                          # 모니터링 스택 사용 시: http://localhost:3100 (로컬) / http://loki.talkertive.local:3100 (ECS)
 ```
 
 ### Frontend (`frontend/.env.local`)
