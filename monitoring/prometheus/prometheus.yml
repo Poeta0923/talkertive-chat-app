@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: talkertive-backend
+    metrics_path: /metrics
+    static_configs:
+      # 로컬: host.docker.internal (Docker Desktop macOS/Windows)
+      # 리눅스 서버: 실제 호스트 IP 또는 컨테이너 이름으로 교체
+      - targets: ['host.docker.internal:8000']
