@@ -55,7 +55,8 @@
     "slugify": "^1.6.9",
     "socket.io": "^4.8.3",
     "uuid": "11.1.0",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "winston-loki": "^6.1.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

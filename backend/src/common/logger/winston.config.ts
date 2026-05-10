@@ -3,6 +3,7 @@ import {
   WinstonModuleOptions,
 } from 'nest-winston';
 import * as winston from 'winston';
+import LokiTransport from 'winston-loki';
 import { RequestContext } from '../request-context';
 
 /**
@@ -39,12 +40,26 @@ export function createWinstonOptions(appName: string): WinstonModuleOptions {
     }),
   );
 
-  return {
-    transports: [
-      new winston.transports.Console({
-        level: isProd ? 'info' : 'debug',
-        format: isProd ? productionFormat : developmentFormat,
+  const transports: winston.transport[] = [
+    new winston.transports.Console({
+      level: isProd ? 'info' : 'debug',
+      format: isProd ? productionFormat : developmentFormat,
+    }),
+  ];
+
+  // LOKI_HOST가 설정된 경우에만 활성화 — 로컬/프로덕션 모두 지원
+  if (process.env.LOKI_HOST) {
+    transports.push(
+      new LokiTransport({
+        host: process.env.LOKI_HOST,
+        labels: { app: 'talkertive', env: process.env.NODE_ENV ?? 'development' },
+        format: productionFormat,
+        // 배치 전송으로 Loki 부하 감소
+        batching: true,
+        interval: 5,
       }),
-    ],
-  };
+    );
+  }
+
+  return { transports };
 }
