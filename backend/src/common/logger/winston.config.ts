@@ -49,8 +49,6 @@ export function createWinstonOptions(appName: string): WinstonModuleOptions {
 
   // LOKI_HOST가 설정된 경우에만 활성화 — 로컬/프로덕션 모두 지원
   if (process.env.LOKI_HOST) {
-    // eslint-disable-next-line no-console
-    console.log(`[winston] Loki transport enabled: ${process.env.LOKI_HOST}`);
     transports.push(
       new LokiTransport({
         host: process.env.LOKI_HOST,
@@ -59,16 +57,8 @@ export function createWinstonOptions(appName: string): WinstonModuleOptions {
         // 배치 전송으로 Loki 부하 감소
         batching: true,
         interval: 5,
-        // silent failure 방지 — 연결 실패 시 콘솔에 에러 출력
-        onConnectionError: (err: unknown) => {
-          // eslint-disable-next-line no-console
-          console.error('[winston-loki] connection error:', err);
-        },
       }),
     );
-  } else {
-    // eslint-disable-next-line no-console
-    console.log('[winston] Loki transport disabled (LOKI_HOST not set)');
   }
 
   return { transports };
