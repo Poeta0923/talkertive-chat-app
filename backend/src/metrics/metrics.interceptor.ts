@@ -4,21 +4,26 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { Histogram, register } from 'prom-client';
 import { Observable } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
+import { getOrCreateHistogram } from './metrics.helper';
 
 const BUCKETS = [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
 
-// watch 모드 hot-reload 시 중복 등록 방지 — 이미 등록된 메트릭이 있으면 재사용
-function getOrCreateHistogram(name: string, help: string): Histogram {
-  return (register.getSingleMetric(name) as Histogram) ?? new Histogram({ name, help, labelNames: ['controller', 'handler', 'method'], buckets: BUCKETS });
-}
-
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
-  private readonly successHistogram = getOrCreateHistogram('nestjs_success_requests', 'NestJS 성공 요청 응답시간 (초)');
-  private readonly failHistogram = getOrCreateHistogram('nestjs_fail_requests', 'NestJS 실패 요청 응답시간 (초)');
+  private readonly successHistogram = getOrCreateHistogram({
+    name: 'nestjs_success_requests',
+    help: 'NestJS 성공 요청 응답시간 (초)',
+    labelNames: ['controller', 'handler', 'method'],
+    buckets: BUCKETS,
+  });
+  private readonly failHistogram = getOrCreateHistogram({
+    name: 'nestjs_fail_requests',
+    help: 'NestJS 실패 요청 응답시간 (초)',
+    labelNames: ['controller', 'handler', 'method'],
+    buckets: BUCKETS,
+  });
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<{ url: string; method: string }>();
