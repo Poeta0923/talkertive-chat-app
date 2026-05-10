@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
+import { getOrCreateHistogram } from 'src/metrics/metrics.helper';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AiScheduleRequestDto } from './dto/ai-schedule-request.dto';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
@@ -56,6 +57,12 @@ function formatDate(date: Date): string {
 @Injectable()
 export class SchedulesService {
   private readonly anthropic: Anthropic;
+  private readonly claudeHistogram = getOrCreateHistogram({
+    name: 'claude_api_duration_seconds',
+    help: 'Claude API 응답 소요 시간 (초)',
+    labelNames: ['model'],
+    buckets: [0.5, 1, 2, 5, 10, 20, 30],
+  });
 
   constructor(private prisma: PrismaService) {
     this.anthropic = new Anthropic({
@@ -275,6 +282,7 @@ Return format by action_type:
 {"type":"일정 취소","name":"string","date":"YYYY-MM-DD HH:mm"}`;
 
     // Claude API 호출
+    const timer = this.claudeHistogram.startTimer({ model: 'claude-haiku-4-5' });
     const message = await this.anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 20000,
@@ -287,6 +295,7 @@ Return format by action_type:
         },
       ],
     });
+    timer();
 
     const rawText = message.content
       .filter((block) => block.type === 'text')
