@@ -157,6 +157,8 @@ jobs:
             s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/grafana/provisioning/datasources/datasources.yml
           aws s3 cp monitoring/grafana/provisioning/dashboards/dashboards.yml \
             s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/grafana/provisioning/dashboards/dashboards.yml
+          aws s3 sync monitoring/grafana/dashboards/ \
+            s3://talkertive-s3-bucket-857110241994-ap-northeast-2-an/monitoring/grafana/dashboards/
 
       - name: 백엔드 이미지 빌드 & ECR 푸시
         env:
@@ -197,6 +199,13 @@ jobs:
             --service talkertive-frontend-service \
             --force-new-deployment
 
+      - name: ECS Grafana 배포
+        run: |
+          aws ecs update-service \
+            --cluster talkertive-cluster \
+            --service talkertive-grafana-service \
+            --force-new-deployment
+
       - name: 배포 완료 대기 (백엔드)
         run: |
           aws ecs wait services-stable \
@@ -208,3 +217,9 @@ jobs:
           aws ecs wait services-stable \
             --cluster talkertive-cluster \
             --services talkertive-frontend-service
+
+      - name: 배포 완료 대기 (Grafana)
+        run: |
+          aws ecs wait services-stable \
+            --cluster talkertive-cluster \
+            --services talkertive-grafana-service
